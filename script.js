@@ -27,7 +27,7 @@ const CONFIG = {
         GRID_SIZE: 20,
         TILE_COUNT: 20,
         UPDATE_INTERVAL: 150,
-        GAME_DURATION: 30000 // 30秒游戏时间
+        GAME_DURATION: 60000 // 60秒游戏时间
     },
     
     // 抽奖配置
@@ -845,21 +845,31 @@ class AuthManager {
     
     // 普通用户登录
     async handleNormalLogin(nickname) {
+        // 检查存储的用户是否被封禁（非开发者账号）
+        const stored = this.storage.getUserData() || {};
+        if (stored.banned && stored.nickname && stored.nickname.toLowerCase() === nickname.toLowerCase()) {
+            Utils.showNotification('该账号已被封禁，无法常规登录。请使用申诉或邀请方式解封。', 'error');
+            return;
+        }
+
         // 保存用户数据
         const userData = {
             nickname: nickname,
             isDeveloper: false,
+            banned: stored.banned || false,
+            banReason: stored.banReason || null,
+            banHistory: stored.banHistory || [],
             loginCount: (this.storage.getUserData()?.loginCount || 0) + 1,
             firstLogin: this.storage.getUserData()?.firstLogin || new Date().toISOString(),
             lastLogin: new Date().toISOString()
         };
-        
+
         this.storage.setUserData(userData);
         this.currentUser = userData;
-        
+
         // 显示成功动画
         await this.showLoginSuccess();
-        
+
         // 跳转到主菜单
         this.screens.showScreen(this.screens.screens.MENU);
     }
@@ -877,6 +887,12 @@ class AuthManager {
             lastLogin: new Date().toISOString()
         };
         
+        // 若账号在存储中被标记为封禁，开发者仍然可以登录以进行解封操作
+        const stored = this.storage.getUserData() || {};
+        userData.banned = stored.banned || false;
+        userData.banReason = stored.banReason || null;
+        userData.banHistory = stored.banHistory || [];
+
         this.storage.setUserData(userData);
         this.currentUser = userData;
         this.isDeveloperMode = true;
@@ -1031,6 +1047,54 @@ class AuthManager {
         if (pointsElement) {
             pointsElement.textContent = userData?.violationPoints || 0;
         }
+        
+        // 管理一键解封按钮（仅开发者可见并且该账号处于封禁状态）
+        const unbanBtn = document.getElementById('unban-btn');
+        if (unbanBtn) {
+            if (userData?.banned && userData?.nickname === CONFIG.DEVELOPER.NICKNAME && this.isDeveloperMode) {
+                unbanBtn.style.display = 'inline-block';
+                unbanBtn.onclick = () => this.unbanCurrentUser();
+            } else {
+                unbanBtn.style.display = 'none';
+                unbanBtn.onclick = null;
+            }
+        }
+    }
+
+    // 封禁当前用户（被游戏超时触发）
+    banCurrentUser(reason = 'system timeout') {
+        const userData = this.storage.getUserData() || {};
+        const now = new Date().toISOString();
+        userData.banned = true;
+        userData.banReason = reason;
+        userData.bannedAt = now;
+        userData.banHistory = userData.banHistory || [];
+        userData.banHistory.push({ reason, at: now, by: 'system' });
+        this.storage.setUserData(userData);
+
+        Utils.showNotification('检测到违规行为，账号已被封禁。', 'error');
+
+        // 强制登出并回到登录界面
+        this.handleLogout();
+    }
+
+    // 解封当前用户（开发者专用）
+    unbanCurrentUser() {
+        const userData = this.storage.getUserData() || {};
+        if (!userData.banned) {
+            Utils.showNotification('账号未被封禁', 'info');
+            return;
+        }
+
+        const now = new Date().toISOString();
+        userData.banned = false;
+        userData.unbannedAt = now;
+        userData.banHistory = userData.banHistory || [];
+        userData.banHistory.push({ action: 'unban', at: now, by: 'developer' });
+        this.storage.setUserData(userData);
+
+        Utils.showNotification('已为该账号解除封禁（开发者操作）', 'success');
+        this.updateMainScreen();
     }
 }
 // === JS_AUTH_MANAGER 结束 ===
@@ -1174,11 +1238,12 @@ class GameManager {
         this.startTime = Date.now();
         this.lastUpdateTime = performance.now();
         this.gameTimer = setInterval(() => {
-            this.gameTime = Math.floor((Date.now() - this.startTime) / 1000);
+            const elapsedMs = Date.now() - this.startTime;
+            this.gameTime = Math.floor(elapsedMs / 1000);
             this.updateTimeDisplay();
-            
-            // 检查游戏时间结束
-            if (this.gameTime >= 30 && !this.gameOver) {
+
+            // 检查游戏时间结束（使用 CONFIG.GAME.GAME_DURATION 毫秒）
+            if (elapsedMs >= (CONFIG.GAME.GAME_DURATION || 60000) && !this.gameOver) {
                 this.endGame('timeout');
             }
         }, 1000);
@@ -1298,6 +1363,19 @@ class GameManager {
         
         this.updateGameStatus(reasons[reason] || '游戏结束');
         
+        // 如果因为超时导致游戏结束，则触发封号逻辑并强制登出
+        if (reason === 'timeout') {
+            setTimeout(() => {
+                if (window.authManager) {
+                    window.authManager.banCurrentUser('游戏超时触发封号');
+                } else {
+                    // 回退：显示游戏结束页面
+                    this.showGameOverScreen();
+                }
+            }, 800);
+            return;
+        }
+
         // 显示最终分数
         setTimeout(() => {
             this.showGameOverScreen();
