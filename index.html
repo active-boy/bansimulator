@@ -306,6 +306,7 @@
                 <button id="action-post" class="action-btn">📝 发布内容</button>
                 <button id="action-comment" class="action-btn">💬 发表评论</button>
                 <button id="action-share" class="action-btn">🔗 分享内容</button>
+                <button id="contact-support" class="action-btn">🧾 联系客服</button>
             </div>
             
             <div class="ban-history">
@@ -344,6 +345,30 @@
         </div>
     </div>
     <!-- === HTML_OTHER 结束 === -->
+    <!-- 客服对话界面 -->
+    <div id="customer-screen" class="screen">
+        <div class="customer-container">
+            <div class="customer-header">
+                <button id="customer-back" class="secondary-btn">← 返回主界面</button>
+                <h2>🧾 人工客服</h2>
+            </div>
+
+            <div id="customer-chat" class="customer-chat">
+                <div class="chat-messages" id="chat-messages"></div>
+            </div>
+
+            <div class="customer-quick">
+                <button class="quick-btn" data-topic="appeal">申诉解封</button>
+                <button class="quick-btn" data-topic="query">违规查询</button>
+                <button class="quick-btn" data-topic="complaint">投诉游戏</button>
+            </div>
+
+            <div class="customer-input">
+                <input id="customer-input" type="text" placeholder="输入消息给客服（示例：为什么我被封号？）">
+                <button id="customer-send" class="primary-btn">发送</button>
+            </div>
+        </div>
+    </div>
 <!-- === HTML_FOOT 开始 === -->
     <script src="script.js"></script>
 </body>

@@ -412,6 +412,60 @@ body {
     font-size: 0.85em;
     opacity: 0.9;
 }
+
+/* 客服对话样式 */
+.customer-container {
+    max-width: 800px;
+    margin: 40px auto;
+    background: rgba(255,255,255,0.06);
+    padding: 20px;
+    border-radius: 12px;
+    color: white;
+}
+
+.customer-header {
+    display:flex;
+    align-items:center;
+    gap:12px;
+    margin-bottom:12px;
+}
+
+.customer-chat {
+    background: rgba(0,0,0,0.2);
+    padding: 12px;
+    border-radius: 8px;
+    height: 360px;
+    overflow-y: auto;
+    margin-bottom: 12px;
+}
+
+.chat-messages .msg {
+    padding: 8px 12px;
+    border-radius: 12px;
+    margin-bottom:8px;
+    max-width: 80%;
+}
+
+.chat-messages .msg.agent {
+    background: rgba(255,255,255,0.12);
+    color: #fff;
+    align-self: flex-start;
+}
+
+.chat-messages .msg.user {
+    background: rgba(255,255,255,0.25);
+    color: #000;
+    align-self: flex-end;
+    margin-left: auto;
+}
+
+.customer-quick { display:flex; gap:8px; margin-bottom:8px; }
+.quick-btn { padding:6px 10px; border-radius:8px; background:rgba(255,255,255,0.08); color:white; border:none; cursor:pointer; }
+
+.customer-input { display:flex; gap:8px; }
+.customer-input input { flex:1; padding:10px 12px; border-radius:8px; border:1px solid rgba(255,255,255,0.08); background:transparent; color:white; }
+.customer-input input::placeholder { color: rgba(255,255,255,0.6); }
+
 /* === CSS_MENU 结束 === */
 /* === CSS_GAME 开始 === */
 /* 贪吃蛇游戏界面样式 */

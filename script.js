@@ -2053,6 +2053,144 @@ class LotteryManager {
     }
 }
 // === JS_LOTTERY_MANAGER_2 结束 ===
+// === JS_CUSTOMER_SERVICE 开始 ===
+class CustomerService {
+    constructor(storageManager, screenManager, authManager) {
+        this.storage = storageManager;
+        this.screens = screenManager;
+        this.auth = authManager;
+        this.init();
+    }
+
+    init() {
+        this.bindUI();
+        this.canned = this.buildCannedResponses();
+    }
+
+    bindUI() {
+        const contactBtn = document.getElementById('contact-support');
+        if (contactBtn) contactBtn.addEventListener('click', () => this.open());
+
+        const backBtn = document.getElementById('customer-back');
+        if (backBtn) backBtn.addEventListener('click', () => this.close());
+
+        const quicks = document.querySelectorAll('.quick-btn');
+        quicks.forEach(b => b.addEventListener('click', (e) => this.handleQuick(e)));
+
+        const sendBtn = document.getElementById('customer-send');
+        if (sendBtn) sendBtn.addEventListener('click', () => this.sendMessage());
+
+        const input = document.getElementById('customer-input');
+        if (input) input.addEventListener('keypress', (e) => { if (e.key === 'Enter') this.sendMessage(); });
+    }
+
+    buildCannedResponses() {
+        return {
+            appeal: [
+                '您好，您选择了申诉解封。请提供被封账号的昵称与简要说明，我们会创建申诉工单。',
+                '提示：普通玩家的封禁为永久模拟，只有开发者账号有权限直接解封。',
+                '是否仍要提交申诉？提交后系统会记录工单，但不会自动解封。'
+            ],
+            query: [
+                '您好，请说明您需要查询的账号，我们会展示封禁原因。',
+                '系统提示：如是因游戏超时触发的封禁，原因将显示为“游戏超时触发封号”。'
+            ],
+            complaint: [
+                '我们已收到您的投诉。请简述问题（例如：游戏卡顿/奖励异常）',
+                '感谢您的反馈，平台会在模拟中记录该投诉，但不会影响当前封禁策略。'
+            ],
+            default: [
+                '您好，这里是人工客服模拟，您可以选择或输入您的问题。',
+                '说明：本系统为本地模拟，所有记录保存在本地浏览器。'
+            ]
+        };
+    }
+
+    open(topic) {
+        this.screens.showScreen('customer-screen');
+        this.appendAgent('您好，欢迎使用人工客服，请选择或输入您的问题。');
+        if (topic) this.runTopic(topic);
+        this.scrollChatToBottom();
+    }
+
+    close() {
+        if (window.screenManager) window.screenManager.showScreen(CONFIG.SCREENS.MAIN);
+    }
+
+    handleQuick(e) {
+        const topic = e.currentTarget.getAttribute('data-topic');
+        this.runTopic(topic);
+    }
+
+    runTopic(topic) {
+        const replies = this.canned[topic] || this.canned.default;
+        replies.forEach((r, i) => setTimeout(() => this.appendAgent(r), i * 700));
+        // Special handling: if appeal, create a ticket record when user confirms
+        if (topic === 'appeal') {
+            setTimeout(() => this.appendAgent('若要提交申诉请在下方输入您的申诉说明并点击发送。'), replies.length * 700 + 200);
+        }
+        this.scrollChatToBottom();
+    }
+
+    appendAgent(text) {
+        this.appendMessage('agent', text);
+    }
+
+    appendUser(text) {
+        this.appendMessage('user', text);
+    }
+
+    appendMessage(who, text) {
+        const container = document.getElementById('chat-messages');
+        if (!container) return;
+        const div = document.createElement('div');
+        div.className = `msg ${who}`;
+        div.textContent = text;
+        container.appendChild(div);
+        this.scrollChatToBottom();
+    }
+
+    scrollChatToBottom() {
+        const container = document.getElementById('chat-messages');
+        if (container) container.scrollTop = container.scrollHeight;
+    }
+
+    sendMessage() {
+        const input = document.getElementById('customer-input');
+        if (!input) return;
+        const text = input.value.trim();
+        if (!text) return;
+        this.appendUser(text);
+        input.value = '';
+
+        // Basic intent matching
+        const lowered = text.toLowerCase();
+        if (lowered.includes('申诉') || lowered.includes('解封')) {
+            // create ticket
+            this.createTicket(text);
+            setTimeout(() => this.appendAgent('申诉已提交，工单编号已保存。注意：此模拟中普通用户申诉不会解封。'), 600);
+        } else if (lowered.includes('为什么') || lowered.includes('原因') || lowered.includes('封')) {
+            const userData = this.storage.getUserData() || {};
+            const reason = userData.banReason || '未记录具体原因';
+            setTimeout(() => this.appendAgent(`封禁原因：${reason}`), 500);
+        } else if (lowered.includes('客服') || lowered.includes('人工')) {
+            setTimeout(() => this.appendAgent('我们是人工客服模拟，请选择申诉或投诉。'), 500);
+        } else {
+            setTimeout(() => this.appendAgent('已收到您的信息，我们的客服会尽快处理（模拟）。'), 500);
+        }
+    }
+
+    createTicket(content) {
+        const user = this.storage.getUserData() || {};
+        const tickets = user.supportTickets || [];
+        const ticket = { id: `T${Date.now()}`, content, status: 'submitted', at: new Date().toISOString() };
+        tickets.push(ticket);
+        user.supportTickets = tickets;
+        this.storage.setUserData(user);
+        this.appendAgent(`工单已创建：${ticket.id}（状态：${ticket.status}）`);
+    }
+}
+// === JS_CUSTOMER_SERVICE 结束 ===
 // === JS_MAIN_APP 开始 ===
 // 主应用协调类
 class FengjinSimulator {
