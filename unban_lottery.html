@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>抽取解封机会</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .page-container{max-width:900px;margin:40px auto;color:white;padding:20px}
+        .lottery-wheel{width:320px;height:320px;margin:20px auto;border-radius:50%;background:linear-gradient(135deg,#2d3748,#1a202c);display:flex;align-items:center;justify-content:center;position:relative}
+        .spin-btn{display:block;margin:12px auto;padding:12px 18px;font-size:16px}
+        .result-box{margin-top:12px;text-align:center}
+    </style>
+</head>
+<body>
+    <div class="page-container">
+        <h1>🎯 抽取解封机会</h1>
+        <p>此处为针对被封账号的解封机会抽取页面。非管理员用户点击“申请解封”将跳转到本页。</p>
+
+        <div class="lottery-section">
+            <div class="lottery-wheel" id="unban-wheel">
+                <div style="text-align:center;color:#fff;">转盘</div>
+            </div>
+
+            <button id="unban-spin" class="spin-btn primary-btn">抽取一次（消耗: 1 次机会）</button>
+            <div id="unban-result" class="result-box"></div>
+        </div>
+
+        <hr style="margin:24px 0;border-color:rgba(255,255,255,0.06);">
+
+        <h2>投诉平台</h2>
+        <p>如果您认为封禁存在问题，可通过投诉平台进一步说明，我们会在模拟环境记录你的申诉。</p>
+        <button id="go-complaint-ai" class="secondary-btn">前往 AI 客服（申诉/投诉）</button>
+
+        <div style="margin-top:18px">
+            <a href="index.html">← 返回登录页面</a>
+        </div>
+    </div>
+
+    <script>
+        // 简单抽取逻辑：10% 几率获得“解封券”
+        document.getElementById('unban-spin').addEventListener('click', function(){
+            const btn = this; btn.disabled = true; btn.textContent = '抽取中...';
+            setTimeout(()=>{
+                const r = Math.random();
+                const win = r < 0.10; // 10% chance
+                const box = document.getElementById('unban-result');
+                if(win){
+                    box.innerHTML = '<div style="color:#48bb78;font-weight:bold">恭喜！获得解封券（模拟）——请联系人工客服完成后续流程。</div>';
+                } else {
+                    box.innerHTML = '<div style="color:#f6ad55">未获得解封券，再接再厉。</div>';
+                }
+                btn.disabled = false; btn.textContent = '抽取一次（消耗: 1 次机会）';
+            }, 1200);
+        });
+
+        document.getElementById('go-complaint-ai').addEventListener('click', function(){
+            window.location.href = 'ai_customer.html';
+        });
+    </script>
+</body>
+</html>

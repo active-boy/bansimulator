@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 客服（模拟）</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .ai-container{max-width:900px;margin:40px auto;color:white;padding:20px}
+        .chat-box{background:rgba(0,0,0,0.15);padding:12px;border-radius:8px;height:420px;overflow:auto}
+        .msg.agent{background:rgba(66,153,225,0.12);padding:8px;border-radius:8px;margin:8px 0}
+        .msg.user{background:rgba(72,187,120,0.08);padding:8px;border-radius:8px;margin:8px 0;text-align:right}
+        .ai-input{display:flex;gap:8px;margin-top:12px}
+        .ai-input input{flex:1;padding:8px;border-radius:6px;border:1px solid rgba(255,255,255,0.08)}
+    </style>
+</head>
+<body>
+    <div class="ai-container">
+        <h1>🧾 AI 客服（模拟）</h1>
+        <p>本页面为模拟的人工智能客服（非真实 AI）。可参考主程序的客服逻辑。</p>
+
+        <div class="chat-box" id="ai-chat">
+            <div class="msg agent">您好，这里是模拟客服。请简述您的问题（例：为什么我被封号？）。</div>
+        </div>
+
+        <div class="ai-input">
+            <input id="ai-input" placeholder="输入问题，例如：为何我被封号？">
+            <button id="ai-send" class="primary-btn">发送</button>
+        </div>
+
+        <div style="margin-top:12px">
+            <a href="unban_lottery.html">← 返回解封抽取页面</a>
+        </div>
+    </div>
+
+    <script>
+        const chat = document.getElementById('ai-chat');
+        const input = document.getElementById('ai-input');
+        const send = document.getElementById('ai-send');
+
+        function appendMsg(role, text){
+            const d = document.createElement('div');
+            d.className = 'msg ' + role; d.textContent = text; chat.appendChild(d); chat.scrollTop = chat.scrollHeight;
+        }
+
+        send.addEventListener('click', () => {
+            const t = input.value.trim(); if(!t) return; appendMsg('user', t); input.value='';
+            setTimeout(()=>{
+                // 简单规则回复，参考主程序客服
+                const lowered = t.toLowerCase();
+                if(lowered.includes('为什么') || lowered.includes('原因') || lowered.includes('封')){
+                    appendMsg('agent', '系统提示（模拟）：如为游戏超时触发，原因将显示为“游戏超时触发封号”。');
+                } else if(lowered.includes('申诉') || lowered.includes('解封')){
+                    appendMsg('agent', '若要申诉请提供被封账号的昵称与说明。注意：普通用户申诉不会自动解封。');
+                } else {
+                    appendMsg('agent', '已收到您的信息，我们会在模拟环境记录工单（本地存储）。');
+                }
+            }, 600);
+        });
+
+        input.addEventListener('keypress', (e)=>{ if(e.key==='Enter') send.click(); });
+    </script>
+</body>
+</html>

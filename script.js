@@ -1160,7 +1160,23 @@ class AuthManager {
         const backLogin = document.getElementById('banned-back-login');
 
         if (contact) contact.onclick = () => { if (window.customerService) window.customerService.open('complaint'); };
-        if (appeal) appeal.onclick = () => { if (window.customerService) window.customerService.open('appeal'); };
+
+        // 申诉/申请解封按钮：若当前存储用户为 admin，则提示登录成功；否则跳转到独立的解封抽取页
+        if (appeal) appeal.onclick = () => {
+            try {
+                const stored = this.storage.getUserData() || {};
+                const nick = (stored.nickname || '').toLowerCase();
+                if (nick === CONFIG.DEVELOPER.NICKNAME) {
+                    Utils.showNotification('管理员登录成功（模拟）', 'success');
+                } else {
+                    // 非管理员跳转到独立页面，页面上包含抽取解封机会和投诉入口
+                    window.location.href = 'unban_lottery.html';
+                }
+            } catch (e) {
+                window.location.href = 'unban_lottery.html';
+            }
+        };
+
         if (backLogin) backLogin.onclick = () => { this.handleLogout(); };
     }
 
