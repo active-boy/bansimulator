@@ -593,12 +593,29 @@ class ScreenManager {
         const card = event.currentTarget;
         const targetScreen = card.getAttribute('data-target');
         console.log(`🎯 点击菜单卡片，目标: ${targetScreen}`);
-        
-        if (targetScreen && this.screens[targetScreen]) {
-            this.showScreen(targetScreen);
-        } else {
-            console.error('❌ 无效的屏幕目标:', targetScreen);
+        if (!targetScreen) {
+            console.error('❌ 未设置 data-target:', card);
+            return;
         }
+
+        // 支持两种 data-target：
+        // - 直接使用屏幕 ID（例如 'game-screen'）
+        // - 使用 CONFIG.SCREENS 的键名（例如 'GAME'）映射到实际 ID
+        const screensObj = this.screens || {};
+        // 如果是 KEY 名称（如 'GAME'）
+        if (screensObj[targetScreen]) {
+            this.showScreen(screensObj[targetScreen]);
+            return;
+        }
+
+        // 如果直接是屏幕 ID（如 'game-screen'）
+        const validScreens = Object.values(screensObj);
+        if (validScreens.includes(targetScreen)) {
+            this.showScreen(targetScreen);
+            return;
+        }
+
+        console.error('❌ 无效的屏幕目标:', targetScreen);
     }
     
     initGameScreen() {
