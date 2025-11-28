@@ -581,10 +581,18 @@ class ScreenManager {
         console.log(`🔍 找到 ${menuCards.length} 个菜单卡片`);
         
         menuCards.forEach((card, index) => {
-            // 移除现有的事件监听器
-            card.removeEventListener('click', this.handleMenuCardClick);
-            // 添加新的事件监听器
-            card.addEventListener('click', (e) => this.handleMenuCardClick(e));
+            // 使用元素属性保存绑定引用，确保可以正确解绑，避免重复监听
+            try {
+                if (card.__menuClickHandler) {
+                    card.removeEventListener('click', card.__menuClickHandler);
+                }
+            } catch (e) {
+                // ignore
+            }
+
+            const handler = (e) => this.handleMenuCardClick(e);
+            card.__menuClickHandler = handler;
+            card.addEventListener('click', handler);
             console.log(`✅ 绑定菜单卡片 ${index + 1}: ${card.getAttribute('data-target')}`);
         });
     }
@@ -1156,6 +1164,9 @@ class GameManager {
         this.updateInterval = 150; // 毫秒
 
         this.updateDisplay();
+        // 显示开始按钮以便测试/手动启动
+        const startBtn = document.getElementById('start-game-btn');
+        if (startBtn) startBtn.style.display = 'inline-block';
     }
 
     generateFood() {
@@ -1212,6 +1223,31 @@ class GameManager {
 
         // 触摸控制（移动端支持）
         this.setupTouchControls();
+
+        // 控制按钮绑定（使用元素上保存的引用以便安全解绑）
+        const startBtn = document.getElementById('start-game-btn');
+        if (startBtn) {
+            try { if (startBtn.__clickHandler) startBtn.removeEventListener('click', startBtn.__clickHandler); } catch(e){}
+            startBtn.__clickHandler = () => this.startGame();
+            startBtn.addEventListener('click', startBtn.__clickHandler);
+        }
+
+        const pauseBtn = document.getElementById('pause-btn');
+        if (pauseBtn) {
+            try { if (pauseBtn.__clickHandler) pauseBtn.removeEventListener('click', pauseBtn.__clickHandler); } catch(e){}
+            pauseBtn.__clickHandler = () => this.togglePause();
+            pauseBtn.addEventListener('click', pauseBtn.__clickHandler);
+        }
+
+        const exitBtn = document.getElementById('exit-btn');
+        if (exitBtn) {
+            try { if (exitBtn.__clickHandler) exitBtn.removeEventListener('click', exitBtn.__clickHandler); } catch(e){}
+            exitBtn.__clickHandler = () => {
+                this.resetGame();
+                if (window.screenManager) window.screenManager.showScreen(CONFIG.SCREENS.MENU);
+            };
+            exitBtn.addEventListener('click', exitBtn.__clickHandler);
+        }
     }
 
     setupTouchControls() {
@@ -1263,6 +1299,9 @@ class GameManager {
         if (this.isRunning) return;
         
         this.isRunning = true;
+        // 隐藏开始按钮以避免重复点击
+        const startBtnEl = document.getElementById('start-game-btn');
+        if (startBtnEl) startBtnEl.style.display = 'none';
         this.startTime = Date.now();
         this.lastUpdateTime = performance.now();
         this.gameTimer = setInterval(() => {
