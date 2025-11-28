@@ -856,7 +856,7 @@ class AuthManager {
         this.setLoadingState(true);
         
         try {
-            // 模拟API调用延迟
+            // API调用延迟
             await this.simulateApiCall(1000 + Math.random() * 500);
             // 在登录前检查是否存在被封禁的本地会话
             const stored = this.storage.getUserData() || {};
@@ -872,7 +872,7 @@ class AuthManager {
 
                 // 用户选择申请解封
                 if (nickname.toLowerCase() === CONFIG.DEVELOPER.NICKNAME) {
-                    // 开发者直接解封（模拟）
+                    // 开发者直接解封
                     try {
                         stored.banned = false;
                         stored.unbannedAt = new Date().toISOString();
@@ -1241,7 +1241,7 @@ class AuthManager {
                 const stored = this.storage.getUserData() || {};
                 const nick = (stored.nickname || '').toLowerCase();
                 if (nick === CONFIG.DEVELOPER.NICKNAME) {
-                    Utils.showNotification('管理员登录成功（模拟）', 'success');
+                        Utils.showNotification('管理员登录成功', 'success');
                 } else {
                     // 非管理员跳转到独立页面，页面上包含抽取解封机会和投诉入口
                     window.location.href = 'unban_lottery.html';
@@ -1703,7 +1703,7 @@ class LotteryManager {
             }
         });
         
-        // 模拟邀请按钮
+        // 邀请按钮
         const simulateBtn = document.getElementById('simulate-invite');
         if (simulateBtn) {
             simulateBtn.addEventListener('click', () => {
@@ -1855,7 +1855,7 @@ class LotteryManager {
             'success'
         );
         
-        // 模拟网络延迟
+        // 网络延迟
         setTimeout(() => {
             Utils.showNotification('好友已成功助力！', 'info');
         }, 1000);
@@ -1864,7 +1864,7 @@ class LotteryManager {
     }
     
     simulateMultipleInvites() {
-        const rewards = [5, 10, 20, 5, 10, 50]; // 模拟多个好友助力
+        const rewards = [5, 10, 20, 5, 10, 50]; // 多个好友助力
         let total = 0;
         
         rewards.forEach((reward, index) => {
@@ -1874,7 +1874,7 @@ class LotteryManager {
                 this.updateDisplay();
                 
                 if (index === rewards.length - 1) {
-                    Utils.showNotification(`模拟完成！共获得 ${total}🎫`, 'success');
+                    Utils.showNotification(`完成！共获得 ${total}🎫`, 'success');
                 }
             }, index * 500);
         });
@@ -2126,7 +2126,7 @@ class LotteryManager {
         }
     }
     
-    // 模拟抽奖（用于测试）
+    // 抽奖（用于测试）
     simulateSpins(count = 10) {
         let goldWins = 0;
         
@@ -2141,7 +2141,7 @@ class LotteryManager {
                 if (i === count - 1) {
                     this.updateDisplay();
                     Utils.showNotification(
-                        `模拟完成！${count}次抽奖中获得 ${goldWins} 次金币`,
+                        `完成！${count}次抽奖中获得 ${goldWins} 次金币`,
                         'success'
                     );
                 }
@@ -2249,7 +2249,7 @@ class CustomerService {
         return {
             appeal: [
                 '您好，您选择了申诉解封。请提供被封账号的昵称与简要说明，我们会创建申诉工单。',
-                '提示：普通玩家的封禁为永久模拟，只有开发者账号有权限直接解封。',
+                '提示：普通玩家的封禁为永久，只有开发者账号有权限直接解封。',
                 '是否仍要提交申诉？提交后系统会记录工单，但不会自动解封。'
             ],
             query: [
@@ -2258,11 +2258,11 @@ class CustomerService {
             ],
             complaint: [
                 '我们已收到您的投诉。请简述问题（例如：游戏卡顿/奖励异常）',
-                '感谢您的反馈，平台会在模拟中记录该投诉，但不会影响当前封禁策略。'
+                '感谢您的反馈，平台会在此处记录该投诉，但不会影响当前封禁策略。'
             ],
             default: [
-                '您好，这里是人工客服模拟，您可以选择或输入您的问题。',
-                '说明：本系统为本地模拟，所有记录保存在本地浏览器。'
+                '您好，这里是人工客服，您可以选择或输入您的问题。',
+                '说明：本系统为本地运行，所有记录保存在本地浏览器。'
             ]
         };
     }
@@ -2329,15 +2329,15 @@ class CustomerService {
         if (lowered.includes('申诉') || lowered.includes('解封')) {
             // create ticket
             this.createTicket(text);
-            setTimeout(() => this.appendAgent('申诉已提交，工单编号已保存。注意：此模拟中普通用户申诉不会解封。'), 600);
+            setTimeout(() => this.appendAgent('申诉已提交，工单编号已保存。注意：此工单中普通用户申诉不会解封。'), 600);
         } else if (lowered.includes('为什么') || lowered.includes('原因') || lowered.includes('封')) {
             const userData = this.storage.getUserData() || {};
             const reason = userData.banReason || '未记录具体原因';
             setTimeout(() => this.appendAgent(`封禁原因：${reason}`), 500);
         } else if (lowered.includes('客服') || lowered.includes('人工')) {
-            setTimeout(() => this.appendAgent('我们是人工客服模拟，请选择申诉或投诉。'), 500);
+            setTimeout(() => this.appendAgent('我们是人工客服，请选择申诉或投诉。'), 500);
         } else {
-            setTimeout(() => this.appendAgent('已收到您的信息，我们的客服会尽快处理（模拟）。'), 500);
+            setTimeout(() => this.appendAgent('已收到您的信息，我们的客服会尽快处理。'), 500);
         }
     }
 
@@ -2373,7 +2373,7 @@ class FengjinSimulator {
             this.startApplication();
             
             this.isInitialized = true;
-            console.log('🎮 封禁模拟器初始化完成');
+            console.log('🎮 封禁器初始化完成');
             
         } catch (error) {
             console.error('应用初始化失败:', error);
@@ -2464,7 +2464,7 @@ class FengjinSimulator {
     
     // 应用生命周期
     startApplication() {
-        Utils.showNotification('封禁模拟器已启动', 'success');
+        Utils.showNotification('封禁器已启动', 'success');
         
         // 显示加载完成动画
         this.showWelcomeAnimation();
@@ -2833,7 +2833,7 @@ function bindMiscUI() {
     const backSettings = document.getElementById('back-to-menu-settings');
     if (backSettings) backSettings.addEventListener('click', () => { if (window.screenManager) window.screenManager.showScreen(CONFIG.SCREENS.MENU); });
 
-    // 发帖 / 评论 / 分享：简单模拟动作
+    // 发帖 / 评论 / 分享：简单动作
     const postBtn = document.getElementById('action-post');
     if (postBtn) postBtn.addEventListener('click', () => { Utils.showNotification('已发布内容（模拟）', 'success'); });
 

@@ -29,7 +29,7 @@
         <hr style="margin:24px 0;border-color:rgba(255,255,255,0.06);">
 
         <h2>投诉平台</h2>
-        <p>如果您认为封禁存在问题，可通过投诉平台进一步说明，我们会在模拟环境记录你的申诉。</p>
+        <p>如果您认为封禁存在问题，可通过投诉平台进一步说明，我们会在此处记录你的申诉。</p>
         <button id="go-complaint-ai" class="secondary-btn">前往 AI 客服（申诉/投诉）</button>
 
         <div style="margin-top:18px">
@@ -46,7 +46,7 @@
                 const win = r < 0.10; // 10% chance
                 const box = document.getElementById('unban-result');
                 if(win){
-                    box.innerHTML = '<div style="color:#48bb78;font-weight:bold">恭喜！获得解封券（模拟）——请联系人工客服完成后续流程。</div>';
+                    box.innerHTML = '<div style="color:#48bb78;font-weight:bold">恭喜！获得解封券——请联系人工客服完成后续流程。</div>';
                 } else {
                     box.innerHTML = '<div style="color:#f6ad55">未获得解封券，再接再厉。</div>';
                 }
