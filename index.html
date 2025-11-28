@@ -66,22 +66,16 @@
                     <div class="menu-badge">新活动</div>
                 </div>
                 
-                <div class="menu-card" data-target="main-screen">
-                    <div class="menu-icon">⚖️</div>
-                    <h3>封禁模拟</h3>
-                    <p>主要剧情体验</p>
-                </div>
-                
-                <div class="menu-card" data-target="settings-screen">
-                    <div class="menu-icon">⚙️</div>
-                    <h3>系统设置</h3>
-                    <p>个性化配置</p>
-                </div>
+                <!-- Removed the standalone ban-simulator card and moved settings to header -->
             </div>
             
+            <div style="position:relative;">
+                <!-- settings button in top-right for logged-in pages -->
+                <button id="menu-settings-btn" title="系统设置" style="position:absolute;right:8px;top:8px;" class="secondary-btn">⚙️</button>
+            </div>
             <div class="menu-footer">
                 <!-- 切换账号入口已移除，游戏仅允许单账号登录 -->
-                <div class="share-note" style="margin-top:12px;font-size:0.85em;opacity:0.9;color:#fff;">请分享网址给好友让更多人被永封 https://active-boy.github.io/bansimulator/</div>
+                <div class="share-note" style="margin-top:12px;font-size:0.85em;opacity:0.9;color:#fff;">请分享网址给好友 https://active-boy.github.io/bansimulator/</div>
             </div>
         </div>
     </div>
@@ -99,7 +93,6 @@
             <div class="game-stats">
                 <div class="stat-item">
                     <span class="stat-label">分数</span>
-                    <span id="score" class="stat-value">0</span>
                 </div>
                 <!-- 时间计数已移除：计时机制隐藏在程序内部 -->
                 <div class="stat-item">
@@ -275,27 +268,6 @@
             
             <div class="complaint-tip">
                 <small>您的选择将影响后续体验...</small>
-            </div>
-        </div>
-    </div>
-
-    <!-- 封禁模拟主界面 -->
-    <div id="main-screen" class="screen">
-        <div class="ban-container">
-            <div class="ban-header">
-                <h2>⚖️ 账号状态面板</h2>
-                <div class="user-welcome">欢迎, <span id="current-user">用户</span></div>
-            </div>
-            <div class="main-actions">
-                <div class="action-buttons">
-                    <button id="action-post" class="action-btn">📝 发布内容</button>
-                    <button id="action-comment" class="action-btn">💬 发表评论</button>
-                    <button id="action-share" class="action-btn">🔗 分享内容</button>
-                </div>
-
-                <div class="main-footer">
-                    <button id="back-to-menu-main" class="secondary-btn">← 返回菜单</button>
-                </div>
             </div>
         </div>
     </div>

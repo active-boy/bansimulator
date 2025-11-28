@@ -8,7 +8,6 @@ const CONFIG = {
         GAME: 'game-screen',
         INVITE: 'invite-screen',
         COMPLAINT: 'complaint-screen',
-        MAIN: 'main-screen',
         BANNED: 'banned-screen',
         SETTINGS: 'settings-screen'
     },
@@ -547,9 +546,7 @@ class ScreenManager {
             case this.screens.INVITE:
                 this.initInviteScreen();
                 break;
-            case this.screens.MAIN:
-                this.initMainScreen();
-                break;
+                // MAIN screen removed — no init required
         }
         
         // 触发自定义事件
@@ -574,6 +571,14 @@ class ScreenManager {
         
         // 绑定菜单卡片点击事件
         this.bindMenuCardEvents();
+        
+        // 绑定右上角设置按钮（如果存在）
+        const settingsBtn = document.getElementById('menu-settings-btn');
+        if (settingsBtn) {
+            try { if (settingsBtn.__click) settingsBtn.removeEventListener('click', settingsBtn.__click); } catch(e){}
+            settingsBtn.__click = () => { this.showScreen(this.screens.SETTINGS); };
+            settingsBtn.addEventListener('click', settingsBtn.__click);
+        }
     }
     
     // 新增方法：绑定菜单卡片事件
@@ -875,7 +880,8 @@ class AuthManager {
                 this.screens.showScreen(this.screens.screens.BANNED);
                 try { this.updateBannedScreen(); } catch(e){}
             } else {
-                this.screens.showScreen(this.screens.screens.MAIN);
+                // If no banned screen available, fallback to menu
+                this.screens.showScreen(this.screens.screens.MENU);
             }
             return;
         }
@@ -2175,7 +2181,7 @@ class CustomerService {
     }
 
     close() {
-        if (window.screenManager) window.screenManager.showScreen(CONFIG.SCREENS.MAIN);
+        if (window.screenManager) window.screenManager.showScreen(CONFIG.SCREENS.MENU);
     }
 
     handleQuick(e) {
