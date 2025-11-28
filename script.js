@@ -1247,9 +1247,9 @@ class GameManager {
         this.updateInterval = 150; // 毫秒
 
         this.updateDisplay();
-        // 显示开始按钮以便测试/手动启动
+        // 显示开始按钮以便测试/手动启动，并重置其文本为开始
         const startBtn = document.getElementById('start-game-btn');
-        if (startBtn) startBtn.style.display = 'inline-block';
+        if (startBtn) { startBtn.style.display = 'inline-block'; startBtn.textContent = '▶️ 开始游戏'; }
     }
 
     generateFood() {
@@ -1382,9 +1382,9 @@ class GameManager {
         if (this.isRunning) return;
         
         this.isRunning = true;
-        // 隐藏开始按钮以避免重复点击
+        // 保持开始按钮可见；按钮将显示为正向计时器
         const startBtnEl = document.getElementById('start-game-btn');
-        if (startBtnEl) startBtnEl.style.display = 'none';
+        if (startBtnEl) startBtnEl.textContent = Utils.formatTime(0);
         this.startTime = Date.now();
         this.lastUpdateTime = performance.now();
         this.gameTimer = setInterval(() => {
@@ -1550,9 +1550,13 @@ class GameManager {
     }
 
     updateTimeDisplay() {
-        const timeElement = document.getElementById('game-time');
-        if (timeElement) {
-            timeElement.textContent = this.gameTime;
+        // Update the start button to act as a forward timer while game is running
+        const startBtn = document.getElementById('start-game-btn');
+        if (this.isRunning) {
+            const secs = this.gameTime || 0;
+            if (startBtn) startBtn.textContent = Utils.formatTime(secs);
+        } else {
+            if (startBtn) startBtn.textContent = '▶️ 开始游戏';
         }
     }
 
