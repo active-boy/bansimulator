@@ -450,7 +450,6 @@ class StorageManager {
     }
 }
 // === JS_STORAGE 结束 ===
-
 // === JS_SCREEN_MANAGER 开始 ===
 // 屏幕管理和路由控制
 class ScreenManager {
@@ -594,30 +593,12 @@ class ScreenManager {
         const card = event.currentTarget;
         const targetScreen = card.getAttribute('data-target');
         console.log(`🎯 点击菜单卡片，目标: ${targetScreen}`);
-        // 支持两种 data-target 值：
-        // 1) 直接传入屏幕 ID（如 'game-screen'）
-        // 2) 传入 CONFIG.SCREENS 的键名（如 'GAME'），方便使用常量映射
-        if (!targetScreen) {
-            console.error('❌ 未设置 data-target:', card);
-            return;
-        }
-
-        const screensObj = this.screens || {};
-        // 如果 data-target 是 SCREENS 的键名（例如 'GAME'），取映射值
-        const mapped = screensObj[targetScreen];
-        if (mapped) {
-            this.showScreen(mapped);
-            return;
-        }
-
-        // 如果 data-target 直接是屏幕 ID（例如 'game-screen'），校验它在可用屏幕列表中
-        const validScreens = Object.values(screensObj);
-        if (validScreens.includes(targetScreen)) {
+        
+        if (targetScreen && this.screens[targetScreen]) {
             this.showScreen(targetScreen);
-            return;
+        } else {
+            console.error('❌ 无效的屏幕目标:', targetScreen);
         }
-
-        console.error('❌ 无效的屏幕目标:', targetScreen);
     }
     
     initGameScreen() {
@@ -960,13 +941,11 @@ class AuthManager {
     }
     
     setupDeveloperShortcuts() {
-        // 快捷键已经在ScreenManager中处理
         console.log('🔧 开发者快捷键已启用');
     }
     
     createDeveloperPanel() {
         // 开发者面板创建逻辑
-        // 这里可以添加可视化开发者工具
     }
     
     // 会话管理
@@ -1044,18 +1023,14 @@ class GameManager {
     constructor(canvasId = 'snake-canvas') {
         this.canvas = document.getElementById(canvasId);
         this.ctx = this.canvas.getContext('2d');
-        this.config = CONFIG.GAME;
-        
-        this.gridSize = this.config.GRID_SIZE;
-        this.tileCount = this.config.TILE_COUNT;
-        this.updateInterval = this.config.UPDATE_INTERVAL;
-        this.gameDuration = this.config.GAME_DURATION;
+        this.gridSize = 20;
+        this.tileCount = this.canvas.width / this.gridSize;
         
         this.resetGame();
         this.bindControls();
+        this.gameLoop = this.gameLoop.bind(this);
     }
-    
-    // 游戏状态重置
+
     resetGame() {
         this.snake = [
             {x: 10, y: 10}
@@ -1069,44 +1044,135 @@ class GameManager {
         this.isPaused = false;
         this.gameOver = false;
         this.lastUpdateTime = 0;
-        this.startTime = 0;
-        
+        this.updateInterval = 150; // 毫秒
+
         this.updateDisplay();
     }
-    
-    // 游戏初始化
-    init() {
-        this.resetGame();
-        this.startGame();
+
+    generateFood() {
+        let newFood;
+        let onSnake;
+        
+        do {
+            newFood = {
+                x: Math.floor(Math.random() * this.tileCount),
+                y: Math.floor(Math.random() * this.tileCount)
+            };
+            onSnake = this.snake.some(segment => 
+                segment.x === newFood.x && segment.y === newFood.y
+            );
+        } while (onSnake);
+        
+        return newFood;
     }
-    
-    // 游戏开始
+
+    bindControls() {
+        document.addEventListener('keydown', (e) => {
+            if (this.gameOver) return;
+
+            switch(e.key) {
+                case 'ArrowUp':
+                    if (this.dy !== 1) {
+                        this.dx = 0;
+                        this.dy = -1;
+                    }
+                    break;
+                case 'ArrowDown':
+                    if (this.dy !== -1) {
+                        this.dx = 0;
+                        this.dy = 1;
+                    }
+                    break;
+                case 'ArrowLeft':
+                    if (this.dx !== 1) {
+                        this.dx = -1;
+                        this.dy = 0;
+                    }
+                    break;
+                case 'ArrowRight':
+                    if (this.dx !== -1) {
+                        this.dx = 1;
+                        this.dy = 0;
+                    }
+                    break;
+                case ' ':
+                    this.togglePause();
+                    break;
+            }
+        });
+
+        // 触摸控制（移动端支持）
+        this.setupTouchControls();
+    }
+
+    setupTouchControls() {
+        let touchStartX = 0;
+        let touchStartY = 0;
+
+        this.canvas.addEventListener('touchstart', (e) => {
+            touchStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
+            e.preventDefault();
+        });
+
+        this.canvas.addEventListener('touchmove', (e) => {
+            if (!touchStartX || !touchStartY) return;
+
+            const touchEndX = e.touches[0].clientX;
+            const touchEndY = e.touches[0].clientY;
+            
+            const dx = touchEndX - touchStartX;
+            const dy = touchEndY - touchStartY;
+
+            if (Math.abs(dx) > Math.abs(dy)) {
+                // 水平滑动
+                if (dx > 0 && this.dx !== -1) {
+                    this.dx = 1;
+                    this.dy = 0;
+                } else if (dx < 0 && this.dx !== 1) {
+                    this.dx = -1;
+                    this.dy = 0;
+                }
+            } else {
+                // 垂直滑动
+                if (dy > 0 && this.dy !== -1) {
+                    this.dx = 0;
+                    this.dy = 1;
+                } else if (dy < 0 && this.dy !== 1) {
+                    this.dx = 0;
+                    this.dy = -1;
+                }
+            }
+
+            touchStartX = null;
+            touchStartY = null;
+            e.preventDefault();
+        });
+    }
+
     startGame() {
         if (this.isRunning) return;
         
         this.isRunning = true;
         this.startTime = Date.now();
         this.lastUpdateTime = performance.now();
-        
-        // 开始游戏计时器
         this.gameTimer = setInterval(() => {
             this.gameTime = Math.floor((Date.now() - this.startTime) / 1000);
             this.updateTimeDisplay();
             
             // 检查游戏时间结束
-            if (this.gameTime >= this.gameDuration / 1000 && !this.gameOver) {
+            if (this.gameTime >= 30 && !this.gameOver) {
                 this.endGame('timeout');
             }
         }, 1000);
         
-        // 开始游戏循环
-        this.gameLoop();
+        requestAnimationFrame(this.gameLoop);
+        this.updateGameStatus('游戏进行中...');
     }
-    
-    // 游戏主循环
-    gameLoop(currentTime = performance.now()) {
+
+    gameLoop(currentTime) {
         if (!this.isRunning || this.isPaused || this.gameOver) return;
-        
+
         const deltaTime = currentTime - this.lastUpdateTime;
         
         if (deltaTime > this.updateInterval) {
@@ -1115,13 +1181,12 @@ class GameManager {
             this.lastUpdateTime = currentTime;
         }
         
-        requestAnimationFrame((time) => this.gameLoop(time));
+        requestAnimationFrame(this.gameLoop);
     }
-    
-    // 游戏逻辑更新
+
     update() {
         if (this.dx === 0 && this.dy === 0) return;
-        
+
         // 移动蛇头
         const head = {x: this.snake[0].x + this.dx, y: this.snake[0].y + this.dy};
         
@@ -1142,44 +1207,24 @@ class GameManager {
             this.snake.pop();
         }
     }
-    
-    // 碰撞检测
-    checkCollision(position) {
-        // 墙壁碰撞
-        if (position.x < 0 || position.x >= this.tileCount || 
-            position.y < 0 || position.y >= this.tileCount) {
+
+    checkCollision(head) {
+        // 撞墙检测
+        if (head.x < 0 || head.x >= this.tileCount || 
+            head.y < 0 || head.y >= this.tileCount) {
             return true;
         }
         
-        // 自身碰撞
-        for (let i = 0; i < this.snake.length; i++) {
-            if (position.x === this.snake[i].x && position.y === this.snake[i].y) {
+        // 撞自身检测
+        for (let segment of this.snake) {
+            if (head.x === segment.x && head.y === segment.y) {
                 return true;
             }
         }
         
         return false;
     }
-    
-    // 生成食物
-    generateFood() {
-        let newFood;
-        let onSnake;
-        
-        do {
-            newFood = {
-                x: Math.floor(Math.random() * this.tileCount),
-                y: Math.floor(Math.random() * this.tileCount)
-            };
-            onSnake = this.snake.some(segment => 
-                segment.x === newFood.x && segment.y === newFood.y
-            );
-        } while (onSnake);
-        
-        return newFood;
-    }
-    
-    // 绘制游戏
+
     draw() {
         // 清空画布
         this.ctx.fillStyle = '#1a202c';
@@ -1211,150 +1256,19 @@ class GameManager {
             );
         });
     }
-    
-    // 控制绑定
-    bindControls() {
-        document.addEventListener('keydown', (e) => {
-            if (this.gameOver) return;
-            
-            switch(e.key) {
-                case 'ArrowUp':
-                    if (this.dy !== 1) {
-                        this.dx = 0;
-                        this.dy = -1;
-                    }
-                    break;
-                case 'ArrowDown':
-                    if (this.dy !== -1) {
-                        this.dx = 0;
-                        this.dy = 1;
-                    }
-                    break;
-                case 'ArrowLeft':
-                    if (this.dx !== 1) {
-                        this.dx = -1;
-                        this.dy = 0;
-                    }
-                    break;
-                case 'ArrowRight':
-                    if (this.dx !== -1) {
-                        this.dx = 1;
-                        this.dy = 0;
-                    }
-                    break;
-                case ' ':
-                    this.togglePause();
-                    break;
-                case 'Escape':
-                    this.pauseGame();
-                    break;
-            }
-        });
-        
-        // 触摸控制（移动端）
-        this.setupTouchControls();
-        
-        // 游戏控制按钮
-        this.bindControlButtons();
-    }
-    
-    setupTouchControls() {
-        let touchStartX = 0;
-        let touchStartY = 0;
-        
-        this.canvas.addEventListener('touchstart', (e) => {
-            touchStartX = e.touches[0].clientX;
-            touchStartY = e.touches[0].clientY;
-            e.preventDefault();
-        });
-        
-        this.canvas.addEventListener('touchmove', (e) => {
-            if (!touchStartX || !touchStartY) return;
-            
-            const touchEndX = e.touches[0].clientX;
-            const touchEndY = e.touches[0].clientY;
-            
-            const dx = touchEndX - touchStartX;
-            const dy = touchEndY - touchStartY;
-            
-            if (Math.abs(dx) > Math.abs(dy)) {
-                // 水平滑动
-                if (dx > 0 && this.dx !== -1) {
-                    this.dx = 1;
-                    this.dy = 0;
-                } else if (dx < 0 && this.dx !== 1) {
-                    this.dx = -1;
-                    this.dy = 0;
-                }
-            } else {
-                // 垂直滑动
-                if (dy > 0 && this.dy !== -1) {
-                    this.dx = 0;
-                    this.dy = 1;
-                } else if (dy < 0 && this.dy !== 1) {
-                    this.dx = 0;
-                    this.dy = -1;
-                }
-            }
-            
-            touchStartX = null;
-            touchStartY = null;
-            e.preventDefault();
-        });
-    }
-    
-    bindControlButtons() {
-        const pauseBtn = document.getElementById('pause-btn');
-        const exitBtn = document.getElementById('exit-btn');
-        
-        if (pauseBtn) {
-            pauseBtn.onclick = () => this.togglePause();
-        }
-        
-        if (exitBtn) {
-            exitBtn.onclick = () => this.exitToMenu();
-        }
-    }
-    
-    // 游戏控制
+
     togglePause() {
         if (this.gameOver) return;
         
         this.isPaused = !this.isPaused;
-        this.updatePauseButton();
+        this.updateGameStatus(this.isPaused ? '游戏已暂停' : '游戏进行中...');
         
         if (!this.isPaused) {
             this.lastUpdateTime = performance.now();
-            this.gameLoop();
-        }
-        
-        Utils.showNotification(this.isPaused ? '游戏已暂停' : '游戏继续', 'info');
-    }
-    
-    pauseGame() {
-        if (!this.isPaused) {
-            this.isPaused = true;
-            this.updatePauseButton();
+            requestAnimationFrame(this.gameLoop);
         }
     }
-    
-    resumeGame() {
-        if (this.isPaused) {
-            this.isPaused = false;
-            this.updatePauseButton();
-            this.lastUpdateTime = performance.now();
-            this.gameLoop();
-        }
-    }
-    
-    updatePauseButton() {
-        const pauseBtn = document.getElementById('pause-btn');
-        if (pauseBtn) {
-            pauseBtn.textContent = this.isPaused ? '▶️ 继续' : '⏸️ 暂停';
-        }
-    }
-    
-    // 游戏结束
+
     endGame(reason = 'collision') {
         this.isRunning = false;
         this.gameOver = true;
@@ -1362,97 +1276,46 @@ class GameManager {
         
         const reasons = {
             'collision': '游戏结束！蛇撞到了墙壁或自己。',
-            'timeout': '时间到！游戏自动结束。'
+            'timeout': '时间到！游戏自动结束'
         };
         
-        Utils.showNotification(reasons[reason] || '游戏结束', 'info');
+        this.updateGameStatus(reasons[reason] || '游戏结束');
         
-        // 保存游戏结果
-        this.saveGameResult();
-        
-        // 显示结果界面
+        // 显示最终分数
         setTimeout(() => {
             this.showGameOverScreen();
         }, 1000);
     }
-    
-    saveGameResult() {
-        const gameData = {
-            finalScore: this.score,
-            gameTime: this.gameTime,
-            snakeLength: this.snake.length,
-            endReason: this.gameOver ? 'completed' : 'crashed',
-            timestamp: new Date().toISOString()
-        };
-        
-        // 可以保存到存储管理器
-        console.log('游戏结果:', gameData);
-    }
-    
+
     showGameOverScreen() {
-        // 更新最终分数显示
-        const finalScoreElement = document.getElementById('final-score');
-        if (finalScoreElement) {
-            finalScoreElement.textContent = this.score;
-        }
-        
-        // 切换到投诉选择界面
-        if (window.screenManager) {
-            window.screenManager.showScreen(CONFIG.SCREENS.COMPLAINT);
-        }
+        document.getElementById('final-score').textContent = this.score;
+        window.screenManager.showScreen('complaint-screen');
     }
-    
-    exitToMenu() {
-        this.pauseGame();
-        if (window.screenManager) {
-            window.screenManager.showScreen(CONFIG.SCREENS.MENU);
-        }
-    }
-    
-    // 显示更新
+
     updateDisplay() {
         this.updateScoreDisplay();
         this.updateTimeDisplay();
-        this.updateLengthDisplay();
     }
-    
+
     updateScoreDisplay() {
         const scoreElement = document.getElementById('score');
         if (scoreElement) {
             scoreElement.textContent = this.score;
         }
     }
-    
+
     updateTimeDisplay() {
         const timeElement = document.getElementById('game-time');
         if (timeElement) {
-            timeElement.textContent = `${this.gameTime}秒`;
+            timeElement.textContent = this.gameTime;
         }
     }
-    
-    updateLengthDisplay() {
-        const lengthElement = document.getElementById('snake-length');
-        if (lengthElement) {
-            lengthElement.textContent = this.snake.length;
+
+    updateGameStatus(status) {
+        const statusElement = document.getElementById('game-status');
+        if (statusElement) {
+            statusElement.textContent = status;
         }
-    }
-    
-    // 游戏状态获取
-    getGameState() {
-        return {
-            isRunning: this.isRunning,
-            isPaused: this.isPaused,
-            isGameOver: this.gameOver,
-            score: this.score,
-            time: this.gameTime,
-            length: this.snake.length
-        };
-    }
-    
-    // 销毁游戏
-    destroy() {
-        this.isRunning = false;
-        clearInterval(this.gameTimer);
     }
 }
 // === JS_GAME_MANAGER 结束 ===
@@ -1678,7 +1541,7 @@ class LotteryManager {
     }
     
     simulateMultipleInvites() {
-        const rewards = [5, 10, 20, 5, 10, 50];
+        const rewards = [5, 10, 20, 5, 10, 50]; // 模拟多个好友助力
         let total = 0;
         
         rewards.forEach((reward, index) => {
