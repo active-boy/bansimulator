@@ -9,6 +9,7 @@ const CONFIG = {
         INVITE: 'invite-screen',
         COMPLAINT: 'complaint-screen',
         MAIN: 'main-screen',
+        BANNED: 'banned-screen',
         SETTINGS: 'settings-screen'
     },
     
@@ -849,12 +850,8 @@ class AuthManager {
     async handleNormalLogin(nickname) {
         // 检查存储的用户是否被封禁（非开发者账号）
         const stored = this.storage.getUserData() || {};
-        if (stored.banned && stored.nickname && stored.nickname.toLowerCase() === nickname.toLowerCase()) {
-            Utils.showNotification('该账号已被封禁，无法常规登录。请使用申诉或邀请方式解封。', 'error');
-            return;
-        }
 
-        // 保存用户数据
+        // 保存用户数据（保留已存在的封禁信息）
         const userData = {
             nickname: nickname,
             isDeveloper: false,
@@ -871,6 +868,17 @@ class AuthManager {
 
         // 显示成功动画
         await this.showLoginSuccess();
+
+        // 若账号被封禁，则跳转到专用的封禁着陆页；否则进入主菜单
+        if (userData.banned) {
+            if (this.screens && this.screens.screens && this.screens.screens.BANNED) {
+                this.screens.showScreen(this.screens.screens.BANNED);
+                try { this.updateBannedScreen(); } catch(e){}
+            } else {
+                this.screens.showScreen(this.screens.screens.MAIN);
+            }
+            return;
+        }
 
         // 跳转到主菜单
         this.screens.showScreen(this.screens.screens.MENU);
@@ -991,24 +999,20 @@ class AuthManager {
         const errorElement = document.getElementById('error-message');
 
         if (!userData || !userData.nickname) return;
-
-        // 若账号被封禁且不是开发者账号，则禁止常规登录和切换
+        // 如果账号被封禁
         if (userData.banned && userData.nickname.toLowerCase() !== CONFIG.DEVELOPER.NICKNAME) {
-            if (input) {
-                input.value = userData.nickname;
-                input.disabled = true;
+            // 恢复会话并跳转到封禁着陆页
+            this.currentUser = userData;
+            this.isDeveloperMode = false;
+            Utils.showNotification(`检测到封禁会话：${userData.nickname}`, 'warning');
+            if (this.screens && this.screens.screens && this.screens.screens.BANNED) {
+                this.screens.showScreen(this.screens.screens.BANNED);
+                try { this.updateBannedScreen(); } catch(e){}
             }
-            if (startButton) {
-                startButton.disabled = true;
-                const btnText = startButton.querySelector('.btn-text');
-                if (btnText) btnText.textContent = '账号已封禁';
-            }
-            if (errorElement) errorElement.textContent = '该账号已被封禁，无法登录。';
-            Utils.showNotification('该账号已被封禁，无法登录。', 'error');
             return;
         }
 
-        // 如果是开发者账号（或未封禁普通账号），恢复会话并跳转到菜单
+        // 如果是开发者账号或未封禁普通账号，恢复会话并跳转到菜单
         this.currentUser = userData;
         this.isDeveloperMode = userData.isDeveloper || (userData.nickname && userData.nickname.toLowerCase() === CONFIG.DEVELOPER.NICKNAME);
         Utils.showNotification(`恢复会话：${userData.nickname}`, 'info');
@@ -1095,6 +1099,63 @@ class AuthManager {
                 unbanBtn.onclick = null;
             }
         }
+    }
+
+    // 更新被封页面内容并绑定事件
+    updateBannedScreen() {
+        const userData = this.storage.getUserData() || {};
+        const nickEl = document.getElementById('banned-nickname');
+        const reasonEl = document.getElementById('banned-reason');
+        const atEl = document.getElementById('banned-at');
+        const historyContainer = document.getElementById('banned-history-list');
+        const unbanBtn = document.getElementById('banned-unban-btn');
+
+        if (nickEl) nickEl.textContent = userData.nickname || '用户';
+        if (reasonEl) reasonEl.textContent = userData.banReason || '未记录具体原因';
+        if (atEl) atEl.textContent = userData.bannedAt ? new Date(userData.bannedAt).toLocaleString() : '-';
+
+        if (historyContainer) {
+            historyContainer.innerHTML = '';
+            const list = userData.banHistory || [];
+            if (list.length === 0) {
+                const div = document.createElement('div');
+                div.className = 'no-records';
+                div.textContent = '暂无记录';
+                historyContainer.appendChild(div);
+            } else {
+                list.forEach(entry => {
+                    const item = document.createElement('div');
+                    item.className = 'ban-entry';
+                    item.textContent = `${entry.at || entry.timestamp || ''} — ${entry.reason || entry.action || JSON.stringify(entry)}`;
+                    historyContainer.appendChild(item);
+                });
+            }
+        }
+
+        // 绑定按钮事件
+        this.bindBannedEvents();
+
+        // 显示/隐藏开发者解封按钮
+        if (unbanBtn) {
+            const isDev = this.currentUser?.isDeveloper || (this.currentUser?.nickname && this.currentUser.nickname.toLowerCase() === CONFIG.DEVELOPER.NICKNAME);
+            if (isDev && this.isDeveloperMode) {
+                unbanBtn.style.display = 'inline-block';
+                unbanBtn.onclick = () => this.unbanCurrentUser();
+            } else {
+                unbanBtn.style.display = 'none';
+                unbanBtn.onclick = null;
+            }
+        }
+    }
+
+    bindBannedEvents() {
+        const contact = document.getElementById('banned-contact');
+        const appeal = document.getElementById('banned-appeal');
+        const backLogin = document.getElementById('banned-back-login');
+
+        if (contact) contact.onclick = () => { if (window.customerService) window.customerService.open('complaint'); };
+        if (appeal) appeal.onclick = () => { if (window.customerService) window.customerService.open('appeal'); };
+        if (backLogin) backLogin.onclick = () => { this.handleLogout(); };
     }
 
     // 封禁当前用户（被游戏超时触发）

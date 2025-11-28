@@ -286,36 +286,16 @@
                 <h2>⚖️ 账号状态面板</h2>
                 <div class="user-welcome">欢迎, <span id="current-user">用户</span></div>
             </div>
-            
-            <div class="ban-status">
-                <div class="status-item warning">
-                    <span class="status-icon">⚠️</span>
-                    <span class="status-text">账号状态: <strong id="account-status">正常</strong></span>
+            <div class="main-actions">
+                <div class="action-buttons">
+                    <button id="action-post" class="action-btn">📝 发布内容</button>
+                    <button id="action-comment" class="action-btn">💬 发表评论</button>
+                    <button id="action-share" class="action-btn">🔗 分享内容</button>
                 </div>
-                <div class="violation-counter">
-                    <span>违规点数: </span>
-                    <span id="violation-points">0</span>
-                    <span>/10</span>
+
+                <div class="main-footer">
+                    <button id="back-to-menu-main" class="secondary-btn">← 返回菜单</button>
                 </div>
-            </div>
-            
-            <div class="action-buttons">
-                <button id="action-post" class="action-btn">📝 发布内容</button>
-                <button id="action-comment" class="action-btn">💬 发表评论</button>
-                <button id="action-share" class="action-btn">🔗 分享内容</button>
-                <button id="contact-support" class="action-btn">🧾 联系客服</button>
-            </div>
-            
-            <div class="ban-history">
-                <h3>📊 封禁记录</h3>
-                <div id="ban-list" class="ban-list">
-                    <div class="no-records">暂无封禁记录</div>
-                </div>
-            </div>
-            
-            <div class="main-footer">
-                <button id="back-to-menu-main" class="secondary-btn">← 返回菜单</button>
-                <button id="unban-btn" class="primary-btn" style="display: none; margin-left: 12px;">🔓 一键解封（开发者）</button>
             </div>
         </div>
     </div>
@@ -342,6 +322,34 @@
         </div>
     </div>
     <!-- === HTML_OTHER 结束 === -->
+    <!-- 被封账号着陆页（仅对已被封禁的账号显示） -->
+    <div id="banned-screen" class="screen">
+        <div class="banned-container">
+            <div class="banned-header">
+                <h2>⛔ 账号已被封禁</h2>
+                <div class="user-welcome">账号: <strong id="banned-nickname">用户</strong></div>
+            </div>
+
+            <div class="banned-info">
+                <p>封禁原因: <span id="banned-reason">未记录</span></p>
+                <p>封禁时间: <span id="banned-at">-</span></p>
+            </div>
+
+            <div class="banned-actions">
+                <button id="banned-contact" class="primary-btn">联系客服</button>
+                <button id="banned-appeal" class="secondary-btn">提交申诉</button>
+                <button id="banned-back-login" class="secondary-btn">← 返回登录</button>
+                <button id="banned-unban-btn" class="primary-btn" style="display:none;margin-left:8px;">🔓 开发者解封</button>
+            </div>
+
+            <div class="banned-history">
+                <h3>封禁历史</h3>
+                <div id="banned-history-list">
+                    <div class="no-records">暂无记录</div>
+                </div>
+            </div>
+        </div>
+    </div>
     <!-- 客服对话界面 -->
     <div id="customer-screen" class="screen">
         <div class="customer-container">

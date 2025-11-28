@@ -423,6 +423,21 @@ body {
     color: white;
 }
 
+/* 被封页面样式 */
+.banned-container {
+    max-width: 800px;
+    margin: 40px auto;
+    background: rgba(255,255,255,0.04);
+    padding: 20px;
+    border-radius: 12px;
+    color: white;
+}
+
+.banned-header h2 { margin-bottom: 8px; }
+.banned-info { margin: 12px 0; color: #f6ad55; }
+.banned-actions { display:flex; gap:8px; margin: 12px 0 20px; }
+.banned-history { background: rgba(255,255,255,0.02); padding: 12px; border-radius:8px; }
+
 .customer-header {
     display:flex;
     align-items:center;
