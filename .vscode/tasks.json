@@ -8,5 +8,12 @@
 			"isBackground": false,
 			"problemMatcher": []
 		}
+		{
+			"label": "Auto Push When Online",
+			"type": "shell",
+			"command": "powershell -NoProfile -ExecutionPolicy Bypass -File \"${workspaceFolder}\\scripts\\auto_push.ps1\" -RepositoryPath \"${workspaceFolder}\" -Branch main -IntervalSec 60",
+			"isBackground": true,
+			"problemMatcher": []
+		}
 	]
 }
