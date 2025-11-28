@@ -376,6 +376,21 @@ body {
     line-height: 1.5;
 }
 
+/* 封禁状态样式 */
+.status-text .banned {
+    color: var(--danger-color);
+    font-weight: bold;
+}
+
+.status-text .normal {
+    color: var(--text-color);
+}
+
+/* 解封按钮（开发者）微调 */
+#unban-btn {
+    display: none; /* 默认隐藏，由脚本控制显示 */
+}
+
 .menu-badge {
     position: absolute;
     top: -10px;

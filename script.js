@@ -1048,10 +1048,24 @@ class AuthManager {
             pointsElement.textContent = userData?.violationPoints || 0;
         }
         
+        // 管理账号状态显示
+        const statusElement = document.getElementById('account-status');
+        if (statusElement) {
+            if (userData?.banned) {
+                statusElement.textContent = '已封禁';
+                statusElement.classList.add('banned');
+                statusElement.classList.remove('normal');
+            } else {
+                statusElement.textContent = '正常';
+                statusElement.classList.add('normal');
+                statusElement.classList.remove('banned');
+            }
+        }
+
         // 管理一键解封按钮（仅开发者可见并且该账号处于封禁状态）
         const unbanBtn = document.getElementById('unban-btn');
         if (unbanBtn) {
-            if (userData?.banned && userData?.nickname === CONFIG.DEVELOPER.NICKNAME && this.isDeveloperMode) {
+            if (userData?.banned && userData?.nickname && userData.nickname.toLowerCase() === CONFIG.DEVELOPER.NICKNAME && this.isDeveloperMode) {
                 unbanBtn.style.display = 'inline-block';
                 unbanBtn.onclick = () => this.unbanCurrentUser();
             } else {
