@@ -406,6 +406,12 @@ body {
 .menu-footer {
     text-align: center;
 }
+
+/* 分享提示小字，适用于菜单和游戏页 */
+.share-note {
+    font-size: 0.85em;
+    opacity: 0.9;
+}
 /* === CSS_MENU 结束 === */
 /* === CSS_GAME 开始 === */
 /* 贪吃蛇游戏界面样式 */

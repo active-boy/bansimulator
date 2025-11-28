@@ -781,13 +781,7 @@ class AuthManager {
             });
         }
         
-        // 登出按钮
-        const logoutButton = document.getElementById('logout-btn');
-        if (logoutButton) {
-            logoutButton.addEventListener('click', () => {
-                this.handleLogout();
-            });
-        }
+        // 注：已移除“切换账号”按钮，游戏仅允许单账号登录
     }
     
     // 输入验证
@@ -981,16 +975,36 @@ class AuthManager {
         // 开发者面板创建逻辑
     }
     
-    // 会话管理
+    // 会话管理：如果存在已保存用户则限制切换账号，普通被封号用户无法再登录
     checkExistingSession() {
         const userData = this.storage.getUserData();
-        if (userData && userData.nickname) {
-            const input = document.getElementById('nickname-input');
+        const input = document.getElementById('nickname-input');
+        const startButton = document.getElementById('start-button');
+        const errorElement = document.getElementById('error-message');
+
+        if (!userData || !userData.nickname) return;
+
+        // 若账号被封禁且不是开发者账号，则禁止常规登录和切换
+        if (userData.banned && userData.nickname.toLowerCase() !== CONFIG.DEVELOPER.NICKNAME) {
             if (input) {
                 input.value = userData.nickname;
-                input.placeholder = `上次用户: ${userData.nickname}`;
+                input.disabled = true;
             }
+            if (startButton) {
+                startButton.disabled = true;
+                const btnText = startButton.querySelector('.btn-text');
+                if (btnText) btnText.textContent = '账号已封禁';
+            }
+            if (errorElement) errorElement.textContent = '该账号已被封禁，无法登录。';
+            Utils.showNotification('该账号已被封禁，无法登录。', 'error');
+            return;
         }
+
+        // 如果是开发者账号（或未封禁普通账号），恢复会话并跳转到菜单
+        this.currentUser = userData;
+        this.isDeveloperMode = userData.isDeveloper || (userData.nickname && userData.nickname.toLowerCase() === CONFIG.DEVELOPER.NICKNAME);
+        Utils.showNotification(`恢复会话：${userData.nickname}`, 'info');
+        this.screens.showScreen(this.screens.screens.MENU);
     }
     
     // 登出处理
