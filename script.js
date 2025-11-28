@@ -450,6 +450,7 @@ class StorageManager {
     }
 }
 // === JS_STORAGE 结束 ===
+
 // === JS_SCREEN_MANAGER 开始 ===
 // 屏幕管理和路由控制
 class ScreenManager {
@@ -469,8 +470,10 @@ class ScreenManager {
     // 屏幕显示控制
     showScreen(screenId, addToHistory = true) {
         // 验证屏幕ID
-        if (!Object.values(this.screens).includes(screenId)) {
+        const validScreens = Object.values(this.screens);
+        if (!validScreens.includes(screenId)) {
             console.error(`未知的屏幕ID: ${screenId}`);
+            console.log('可用屏幕:', validScreens);
             return false;
         }
         
@@ -493,10 +496,11 @@ class ScreenManager {
             // 触发屏幕显示事件
             this.onScreenShow(screenId);
             
-            console.log(`切换到屏幕: ${screenId}`);
+            console.log(`✅ 切换到屏幕: ${screenId}`);
             return true;
         }
         
+        console.error(`❌ 屏幕元素未找到: ${screenId}`);
         return false;
     }
     
@@ -567,9 +571,57 @@ class ScreenManager {
     initMenuScreen() {
         // 更新用户信息显示
         this.updateMenuDisplay();
+        
+        // 绑定菜单卡片点击事件
+        this.bindMenuCardEvents();
+    }
+    
+    // 新增方法：绑定菜单卡片事件
+    bindMenuCardEvents() {
+        const menuCards = document.querySelectorAll('.menu-card');
+        console.log(`🔍 找到 ${menuCards.length} 个菜单卡片`);
+        
+        menuCards.forEach((card, index) => {
+            // 移除现有的事件监听器
+            card.removeEventListener('click', this.handleMenuCardClick);
+            // 添加新的事件监听器
+            card.addEventListener('click', (e) => this.handleMenuCardClick(e));
+            console.log(`✅ 绑定菜单卡片 ${index + 1}: ${card.getAttribute('data-target')}`);
+        });
+    }
+    
+    handleMenuCardClick(event) {
+        const card = event.currentTarget;
+        const targetScreen = card.getAttribute('data-target');
+        console.log(`🎯 点击菜单卡片，目标: ${targetScreen}`);
+        // 支持两种 data-target 值：
+        // 1) 直接传入屏幕 ID（如 'game-screen'）
+        // 2) 传入 CONFIG.SCREENS 的键名（如 'GAME'），方便使用常量映射
+        if (!targetScreen) {
+            console.error('❌ 未设置 data-target:', card);
+            return;
+        }
+
+        const screensObj = this.screens || {};
+        // 如果 data-target 是 SCREENS 的键名（例如 'GAME'），取映射值
+        const mapped = screensObj[targetScreen];
+        if (mapped) {
+            this.showScreen(mapped);
+            return;
+        }
+
+        // 如果 data-target 直接是屏幕 ID（例如 'game-screen'），校验它在可用屏幕列表中
+        const validScreens = Object.values(screensObj);
+        if (validScreens.includes(targetScreen)) {
+            this.showScreen(targetScreen);
+            return;
+        }
+
+        console.error('❌ 无效的屏幕目标:', targetScreen);
     }
     
     initGameScreen() {
+        console.log('🎮 初始化游戏界面');
         // 初始化游戏
         if (window.gameManager) {
             window.gameManager.init();
@@ -577,6 +629,7 @@ class ScreenManager {
     }
     
     initInviteScreen() {
+        console.log('🎰 初始化抽奖界面');
         // 初始化抽奖系统
         if (window.lotteryManager) {
             window.lotteryManager.init();
@@ -584,6 +637,7 @@ class ScreenManager {
     }
     
     initMainScreen() {
+        console.log('⚖️ 初始化主界面');
         // 更新主界面状态
         if (window.authManager) {
             window.authManager.updateMainScreen();
@@ -592,7 +646,7 @@ class ScreenManager {
     
     // 工具方法
     checkSavedUser() {
-        const userData = window.storageManager.getUserData();
+        const userData = window.storageManager ? window.storageManager.getUserData() : null;
         if (userData && userData.nickname) {
             const input = document.getElementById('nickname-input');
             if (input) {
@@ -603,7 +657,7 @@ class ScreenManager {
     }
     
     updateMenuDisplay() {
-        const userData = window.storageManager.getUserData();
+        const userData = window.storageManager ? window.storageManager.getUserData() : null;
         const usernameElement = document.getElementById('menu-username');
         const devBadgeElement = document.getElementById('developer-badge');
         
@@ -611,8 +665,12 @@ class ScreenManager {
             usernameElement.textContent = userData.nickname || '用户';
         }
         
-        if (devBadgeElement && userData.isDeveloper) {
-            devBadgeElement.style.display = 'inline-block';
+        if (devBadgeElement) {
+            if (userData && userData.isDeveloper) {
+                devBadgeElement.style.display = 'inline-block';
+            } else {
+                devBadgeElement.style.display = 'none';
+            }
         }
     }
     
@@ -645,7 +703,7 @@ class ScreenManager {
         
         // 屏幕变化事件监听
         document.addEventListener('screenChange', (e) => {
-            console.log('屏幕变化:', e.detail);
+            console.log('🔄 屏幕变化:', e.detail);
         });
     }
     
@@ -655,18 +713,15 @@ class ScreenManager {
         switch(e.key) {
             case 'D': // Ctrl+Shift+D - 切换开发者面板
                 e.preventDefault();
-                if (window.authManager.toggleDeveloperPanel) {
-                    window.authManager.toggleDeveloperPanel();
-                }
+                console.log('🔧 开发者快捷键: D');
                 break;
             case 'R': // Ctrl+Shift+R - 重置数据
                 e.preventDefault();
-                if (window.authManager.resetData) {
-                    window.authManager.resetData();
-                }
+                console.log('🔧 开发者快捷键: R');
                 break;
             case 'G': // Ctrl+Shift+G - 添加金币
                 e.preventDefault();
+                console.log('🔧 开发者快捷键: G');
                 if (window.lotteryManager) {
                     window.lotteryManager.addCurrency('gold', 100);
                 }
