@@ -2597,7 +2597,24 @@ document.addEventListener('DOMContentLoaded', function() {
             `;
         }
     }, 100);
+    
+    // 绑定投诉按钮事件
+    bindComplaintEvents();
 });
+
+// 绑定投诉按钮事件
+function bindComplaintEvents() {
+    const yesBtn = document.getElementById('complain-yes');
+    if (yesBtn) {
+        yesBtn.onclick = () => {
+            if (window.customerService) {
+                window.customerService.open('complaint');
+            } else if (window.screenManager) {
+                window.screenManager.showScreen('customer-screen');
+            }
+        };
+    }
+}
 
 // 全局错误处理
 window.addEventListener('error', (e) => {
