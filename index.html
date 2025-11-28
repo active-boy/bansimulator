@@ -3,22 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🎮 封禁模拟器 - 体验平台审核机制</title>
+    <title>🎮 封禁模拟器 - 体验平台机制与社交玩法</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <!-- === HTML_HEAD 结束 === -->
+<!-- === HTML_LOGIN 开始 === -->
     <!-- 登录界面 -->
     <div id="login-screen" class="screen active">
         <div class="login-container">
             <div class="logo">
                 <h1>🎮 封禁模拟器</h1>
-                <div class="subtitle">体验社交平台的审核机制与边界探索</div>
+                <div class="subtitle">体验社交平台的规则边界与营销机制</div>
             </div>
             
             <div class="input-section">
                 <div class="input-group">
                     <label for="nickname-input">📝 请输入您的昵称</label>
-                    <input type="text" id="nickname-input" placeholder="请输入2-20个字符" maxlength="20" autocomplete="off">
+                    <input type="text" id="nickname-input" placeholder="输入'admin'进入开发者模式" maxlength="20" autocomplete="off">
                     <div id="error-message" class="error-message"></div>
                 </div>
                 
@@ -31,8 +33,8 @@
             <div class="info-section">
                 <div class="feature-list">
                     <div class="feature-item">🔍 体验真实审核流程</div>
-                    <div class="feature-item">🎯 探索平台规则边界</div>
-                    <div class="feature-item">🛡️ 100%安全模拟环境</div>
+                    <div class="feature-item">🎰 参与邀请抽奖游戏</div>
+                    <div class="feature-item">⚖️ 探索平台规则边界</div>
                 </div>
                 <div class="disclaimer">
                     <small>💡 提示：这是一个模拟体验，所有数据仅保存在本地浏览器中</small>
@@ -40,42 +42,217 @@
             </div>
         </div>
     </div>
-
-    <!-- 贪吃蛇游戏界面 -->
-    <div id="game-screen" class="screen">
-        <div class="game-header">
-            <h2>🎮 贪吃蛇小游戏</h2>
-            <div class="player-info">玩家: <span id="player-name">游客</span></div>
-        </div>
-        
-        <div class="game-stats">
-            <div class="stat-item">
-                <span class="stat-label">分数</span>
-                <span id="score" class="stat-value">0</span>
+    <!-- === HTML_LOGIN 结束 === -->
+<!-- === HTML_MENU 开始 === -->
+    <!-- 主菜单界面 -->
+    <div id="menu-screen" class="screen">
+        <div class="menu-container">
+            <div class="user-welcome">
+                <h2>欢迎, <span id="menu-username">用户</span></h2>
+                <div class="user-badge" id="developer-badge" style="display: none;">🔧 开发者模式</div>
             </div>
-            <div class="stat-item">
-                <span class="stat-label">时间</span>
-                <span id="game-time" class="stat-value">0秒</span>
+            
+            <div class="menu-options">
+                <div class="menu-card" data-target="game-screen">
+                    <div class="menu-icon">🎮</div>
+                    <h3>贪吃蛇游戏</h3>
+                    <p>体验小游戏后的审核机制</p>
+                </div>
+                
+                <div class="menu-card" data-target="invite-screen">
+                    <div class="menu-icon">🎁</div>
+                    <h3>邀请有奖</h3>
+                    <p>参与抽奖获得虚拟奖励</p>
+                    <div class="menu-badge">新活动</div>
+                </div>
+                
+                <div class="menu-card" data-target="main-screen">
+                    <div class="menu-icon">⚖️</div>
+                    <h3>封禁模拟</h3>
+                    <p>主要剧情体验</p>
+                </div>
+                
+                <div class="menu-card" data-target="settings-screen">
+                    <div class="menu-icon">⚙️</div>
+                    <h3>系统设置</h3>
+                    <p>个性化配置</p>
+                </div>
             </div>
-            <div class="stat-item">
-                <span class="stat-label">长度</span>
-                <span id="snake-length" class="stat-value">3</span>
+            
+            <div class="menu-footer">
+                <button id="logout-btn" class="secondary-btn">切换账号</button>
             </div>
-        </div>
-        
-        <div class="game-area">
-            <canvas id="snake-canvas" width="400" height="400"></canvas>
-        </div>
-        
-        <div class="game-controls">
-            <div class="controls-info">
-                <p>🎮 使用方向键 ↑↓←→ 控制蛇的移动</p>
-                <p>⏰ 游戏将在30秒后自动结束</p>
-            </div>
-            <button id="pause-btn" class="control-btn">⏸️ 暂停</button>
         </div>
     </div>
-
+    <!-- === HTML_MENU 结束 === -->
+<!-- === HTML_GAME 开始 === -->
+    <!-- 贪吃蛇游戏界面 -->
+    <div id="game-screen" class="screen">
+        <div class="game-container">
+            <div class="game-header">
+                <h2>🎮 贪吃蛇小游戏</h2>
+                <div class="player-info">玩家: <span id="player-name">游客</span></div>
+            </div>
+            
+            <div class="game-stats">
+                <div class="stat-item">
+                    <span class="stat-label">分数</span>
+                    <span id="score" class="stat-value">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">时间</span>
+                    <span id="game-time" class="stat-value">0秒</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">长度</span>
+                    <span id="snake-length" class="stat-value">3</span>
+                </div>
+            </div>
+            
+            <div class="game-area">
+                <canvas id="snake-canvas" width="400" height="400"></canvas>
+            </div>
+            
+            <div class="game-controls">
+                <div class="controls-info">
+                    <p>🎮 使用方向键 ↑↓←→ 控制蛇的移动</p>
+                    <p>⏰ 游戏将在30秒后自动结束</p>
+                </div>
+                <button id="pause-btn" class="control-btn">⏸️ 暂停</button>
+                <button id="exit-btn" class="control-btn secondary-btn">← 返回菜单</button>
+            </div>
+        </div>
+    </div>
+    <!-- === HTML_GAME 结束 === -->
+<!-- === HTML_INVITE 开始 === -->
+    <!-- 邀请助力抽奖界面 -->
+    <div id="invite-screen" class="screen">
+        <div class="invite-container">
+            <div class="invite-header">
+                <h2>🎁 邀请好友赢大奖</h2>
+                <p>100%中奖，最高可得<strong>100金币</strong>！</p>
+            </div>
+            
+            <!-- 货币显示 -->
+            <div class="currency-display">
+                <div class="currency-item">
+                    <span class="currency-icon">🪙</span>
+                    <span class="currency-amount" id="gold-amount">0</span>
+                    <span class="currency-name">金币</span>
+                </div>
+                <div class="currency-item">
+                    <span class="currency-icon">💎</span>
+                    <span class="currency-amount" id="diamond-amount">0</span>
+                    <span class="currency-name">钻石</span>
+                </div>
+                <div class="currency-item">
+                    <span class="currency-icon">🍀</span>
+                    <span class="currency-amount" id="luck-amount">0</span>
+                    <span class="currency-name">幸运值</span>
+                </div>
+                <div class="currency-item">
+                    <span class="currency-icon">🎫</span>
+                    <span class="currency-amount" id="welfare-amount">10</span>
+                    <span class="currency-name">福利值</span>
+                </div>
+            </div>
+            
+            <!-- 抽奖转盘 -->
+            <div class="lottery-section">
+                <div class="lottery-wheel" id="lottery-wheel">
+                    <div class="wheel-center">
+                        <div class="wheel-pointer">🎯</div>
+                    </div>
+                    <div class="wheel-items">
+                        <div class="wheel-item" data-value="9">9💎</div>
+                        <div class="wheel-item" data-value="9">9💎</div>
+                        <div class="wheel-item" data-value="9">9💎</div>
+                        <div class="wheel-item" data-value="9">9💎</div>
+                        <div class="wheel-item" data-value="9">9💎</div>
+                        <div class="wheel-item" data-value="1">1🪙</div>
+                        <div class="wheel-item" data-value="9">9💎</div>
+                        <div class="wheel-item" data-value="9">9💎</div>
+                    </div>
+                </div>
+                
+                <div class="lottery-controls">
+                    <button id="spin-button" class="spin-btn">
+                        <span class="spin-text">抽奖一次</span>
+                        <span class="spin-cost">消耗: 1🪙</span>
+                    </button>
+                    
+                    <div class="spin-info">
+                        <div class="chance-display">
+                            中奖概率: <span id="gold-chance">0.1%</span>
+                        </div>
+                        <div class="pity-counter">
+                            保底计数: <span id="pity-count">0</span>/100
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 兑换区域 -->
+            <div class="exchange-section">
+                <h3>💰 货币兑换</h3>
+                <div class="exchange-options">
+                    <div class="exchange-option">
+                        <span>10🎫 = 1🍀</span>
+                        <button class="exchange-btn" data-from="welfare" data-to="luck" data-rate="10">兑换</button>
+                    </div>
+                    <div class="exchange-option">
+                        <span>10🍀 = 1💎</span>
+                        <button class="exchange-btn" data-from="luck" data-to="diamond" data-rate="10">兑换</button>
+                    </div>
+                    <div class="exchange-option">
+                        <span>10💎 = 1🪙</span>
+                        <button class="exchange-btn" data-from="diamond" data-to="gold" data-rate="10">兑换</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 邀请助力 -->
+            <div class="invite-section">
+                <h3>👥 邀请好友助力</h3>
+                <div class="invite-options">
+                    <div class="invite-option">
+                        <div class="invite-reward">+5🎫</div>
+                        <button class="invite-btn" data-reward="5">分享给好友</button>
+                        <div class="invite-desc">好友点击即可获得奖励</div>
+                    </div>
+                    <div class="invite-option">
+                        <div class="invite-reward">+20🎫</div>
+                        <button class="invite-btn" data-reward="20">邀请注册</button>
+                        <div class="invite-desc">好友注册得双倍奖励</div>
+                    </div>
+                    <div class="invite-option">
+                        <div class="invite-reward">+50🎫</div>
+                        <button class="invite-btn" data-reward="50">组建战队</button>
+                        <div class="invite-desc">3人成团瓜分大奖</div>
+                    </div>
+                </div>
+                
+                <div class="invite-simulation">
+                    <button id="simulate-invite" class="simulate-btn">🎭 模拟邀请成功</button>
+                    <div class="simulate-desc">（开发测试功能：模拟好友助力）</div>
+                </div>
+            </div>
+            
+            <!-- 抽奖记录 -->
+            <div class="history-section">
+                <h3>📊 抽奖记录</h3>
+                <div id="lottery-history" class="history-list">
+                    <div class="history-empty">暂无抽奖记录</div>
+                </div>
+            </div>
+            
+            <div class="invite-footer">
+                <button id="back-to-menu" class="secondary-btn">← 返回菜单</button>
+            </div>
+        </div>
+    </div>
+    <!-- === HTML_INVITE 结束 === -->
+<!-- === HTML_OTHER 开始 === -->
     <!-- 投诉选择界面 -->
     <div id="complaint-screen" class="screen">
         <div class="complaint-container">
@@ -134,9 +311,37 @@
                     <div class="no-records">暂无封禁记录</div>
                 </div>
             </div>
+            
+            <div class="main-footer">
+                <button id="back-to-menu-main" class="secondary-btn">← 返回菜单</button>
+            </div>
         </div>
     </div>
 
+    <!-- 设置界面 -->
+    <div id="settings-screen" class="screen">
+        <div class="settings-container">
+            <h2>⚙️ 系统设置</h2>
+            <div class="settings-options">
+                <div class="setting-item">
+                    <label>音效设置</label>
+                    <input type="range" min="0" max="100" value="50" class="volume-slider">
+                </div>
+                <div class="setting-item">
+                    <label>动画效果</label>
+                    <input type="checkbox" checked class="toggle-switch">
+                </div>
+                <div class="setting-item">
+                    <label>开发者工具</label>
+                    <button id="dev-tools-btn" class="secondary-btn">打开控制台</button>
+                </div>
+            </div>
+            <button id="back-to-menu-settings" class="secondary-btn">← 返回菜单</button>
+        </div>
+    </div>
+    <!-- === HTML_OTHER 结束 === -->
+<!-- === HTML_FOOT 开始 === -->
     <script src="script.js"></script>
 </body>
 </html>
+    <!-- === HTML_FOOT 结束 === -->

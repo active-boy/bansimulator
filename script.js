@@ -1,391 +1,2390 @@
-﻿// 封禁模拟器主应用
-class FengjinSimulator {
-    constructor() {
-        this.screens = {
-            login: 'login-screen',
-            game: 'game-screen', 
-            complaint: 'complaint-screen',
-            main: 'main-screen'
-        };
-        
-        this.currentUser = null;
-        this.violationPoints = 0;
-        this.banHistory = [];
-        
-        this.init();
-    }
-
-    init() {
-        console.log('🎮 封禁模拟器初始化...');
-        this.bindEvents();
-        this.checkExistingUser();
-    }
-
-    // 事件绑定
-    bindEvents() {
-        // 登录界面事件
-        const nicknameInput = document.getElementById('nickname-input');
-        const startButton = document.getElementById('start-button');
-        
-        nicknameInput.addEventListener('input', (e) => this.validateNickname(e.target.value));
-        nicknameInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') this.handleLogin();
-        });
-        startButton.addEventListener('click', () => this.handleLogin());
-        
-        // 游戏界面事件
-        document.getElementById('pause-btn').addEventListener('click', () => this.togglePause());
-        
-        // 投诉界面事件
-        document.getElementById('complain-yes').addEventListener('click', () => this.handleComplaint(true));
-        document.getElementById('complain-no').addEventListener('click', () => this.handleComplaint(false));
-        
-        // 主界面事件
-        document.getElementById('action-post').addEventListener('click', () => this.simulateAction('post'));
-        document.getElementById('action-comment').addEventListener('click', () => this.simulateAction('comment'));
-        document.getElementById('action-share').addEventListener('click', () => this.simulateAction('share'));
-        
-        // 键盘控制
-        document.addEventListener('keydown', (e) => this.handleKeyPress(e));
-    }
-
-    // 屏幕管理
-    showScreen(screenId) {
-        // 隐藏所有屏幕
-        Object.values(this.screens).forEach(screen => {
-            document.getElementById(screen).classList.remove('active');
-        });
-        
-        // 显示目标屏幕
-        const targetScreen = document.getElementById(screenId);
-        if (targetScreen) {
-            targetScreen.classList.add('active');
-            console.log(`切换到屏幕: ${screenId}`);
+﻿// === JS_CONSTANTS 开始 ===
+// 应用常量和配置设置
+const CONFIG = {
+    // 屏幕ID常量
+    SCREENS: {
+        LOGIN: 'login-screen',
+        MENU: 'menu-screen', 
+        GAME: 'game-screen',
+        INVITE: 'invite-screen',
+        COMPLAINT: 'complaint-screen',
+        MAIN: 'main-screen',
+        SETTINGS: 'settings-screen'
+    },
+    
+    // 开发者模式设置
+    DEVELOPER: {
+        NICKNAME: 'admin',
+        SHORTCUTS: {
+            ADD_COINS: 'Ctrl+Shift+G',
+            RESET_DATA: 'Ctrl+Shift+R',
+            TOGGLE_PANEL: 'Ctrl+Shift+D'
         }
-        
-        // 屏幕特定初始化
-        this.onScreenShow(screenId);
+    },
+    
+    // 游戏配置
+    GAME: {
+        GRID_SIZE: 20,
+        TILE_COUNT: 20,
+        UPDATE_INTERVAL: 150,
+        GAME_DURATION: 30000 // 30秒游戏时间
+    },
+    
+    // 抽奖配置
+    LOTTERY: {
+        SPIN_COST: 1,
+        BASE_GOLD_CHANCE: 0.001, // 0.1%
+        PITY_THRESHOLD: 100,
+        REWARDS: {
+            DIAMOND: { type: 'diamond', amount: 9, weight: 90 },
+            GOLD: { type: 'gold', amount: 1, weight: 10 }
+        }
+    },
+    
+    // 货币兑换率
+    EXCHANGE_RATES: {
+        WELFARE_TO_LUCK: 10,
+        LUCK_TO_DIAMOND: 10, 
+        DIAMOND_TO_GOLD: 10
+    },
+    
+    // 本地存储键名
+    STORAGE_KEYS: {
+        USER_DATA: 'fengjin_user_data',
+        GAME_STATE: 'fengjin_game_state',
+        LOTTERY_HISTORY: 'fengjin_lottery_history'
     }
+};
 
-    onScreenShow(screenId) {
-        switch(screenId) {
-            case this.screens.game:
-                this.initGame();
-                break;
-            case this.screens.main:
-                this.updateMainScreen();
-                break;
+// 默认用户数据
+const DEFAULT_USER_DATA = {
+    nickname: '',
+    isDeveloper: false,
+    violationPoints: 0,
+    banHistory: [],
+    loginCount: 0,
+    firstLogin: null,
+    lastLogin: null
+};
+
+// 默认游戏数据
+const DEFAULT_GAME_DATA = {
+    currency: {
+        gold: 0,
+        diamond: 0, 
+        luck: 0,
+        welfare: 10
+    },
+    lotteryHistory: [],
+    spinCount: 0,
+    pityCounter: 0,
+    lastSpin: null
+};
+// === JS_CONSTANTS 结束 ===
+// === JS_UTILS 开始 ===
+// 通用工具函数库
+class Utils {
+    // DOM 操作工具
+    static $(selector) {
+        return document.querySelector(selector);
+    }
+    
+    static $$(selector) {
+        return document.querySelectorAll(selector);
+    }
+    
+    static createElement(tag, classes = '', content = '') {
+        const element = document.createElement(tag);
+        if (classes) element.className = classes;
+        if (content) element.innerHTML = content;
+        return element;
+    }
+    
+    // 显示/隐藏元素
+    static show(element) {
+        if (typeof element === 'string') element = this.$(element);
+        if (element) element.style.display = 'block';
+    }
+    
+    static hide(element) {
+        if (typeof element === 'string') element = this.$(element);
+        if (element) element.style.display = 'none';
+    }
+    
+    static toggle(element, force) {
+        if (typeof element === 'string') element = this.$(element);
+        if (element) {
+            element.style.display = force === undefined ? 
+                (element.style.display === 'none' ? 'block' : 'none') :
+                (force ? 'block' : 'none');
         }
     }
-
-    // 用户管理
-    validateNickname(nickname) {
-        const errorElement = document.getElementById('error-message');
-        const button = document.getElementById('start-button');
+    
+    // 动画工具
+    static fadeIn(element, duration = 300) {
+        return new Promise(resolve => {
+            if (typeof element === 'string') element = this.$(element);
+            element.style.opacity = '0';
+            element.style.display = 'block';
+            
+            let start = null;
+            const animate = (timestamp) => {
+                if (!start) start = timestamp;
+                const progress = timestamp - start;
+                const opacity = Math.min(progress / duration, 1);
+                
+                element.style.opacity = opacity.toString();
+                
+                if (progress < duration) {
+                    requestAnimationFrame(animate);
+                } else {
+                    resolve();
+                }
+            };
+            requestAnimationFrame(animate);
+        });
+    }
+    
+    static fadeOut(element, duration = 300) {
+        return new Promise(resolve => {
+            if (typeof element === 'string') element = this.$(element);
+            let start = null;
+            const animate = (timestamp) => {
+                if (!start) start = timestamp;
+                const progress = timestamp - start;
+                const opacity = Math.max(1 - progress / duration, 0);
+                
+                element.style.opacity = opacity.toString();
+                
+                if (progress < duration) {
+                    requestAnimationFrame(animate);
+                } else {
+                    element.style.display = 'none';
+                    resolve();
+                }
+            };
+            requestAnimationFrame(animate);
+        });
+    }
+    
+    // 随机数生成
+    static randomInt(min, max) {
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+    
+    static randomItem(array) {
+        return array[Math.floor(Math.random() * array.length)];
+    }
+    
+    static weightedRandom(items) {
+        const totalWeight = items.reduce((sum, item) => sum + item.weight, 0);
+        let random = Math.random() * totalWeight;
+        
+        for (const item of items) {
+            random -= item.weight;
+            if (random <= 0) return item;
+        }
+        return items[items.length - 1];
+    }
+    
+    // 时间格式化
+    static formatTime(seconds) {
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
+    
+    static formatDate(date) {
+        return new Date(date).toLocaleString('zh-CN');
+    }
+    
+    // 验证工具
+    static validateNickname(nickname) {
+        if (!nickname || nickname.trim().length === 0) {
+            return { valid: false, message: '昵称不能为空' };
+        }
         
         const trimmed = nickname.trim();
         
-        if (trimmed.length === 0) {
-            this.showError('昵称不能为空');
-            return false;
-        } else if (trimmed.length < 2) {
-            this.showError('昵称至少需要2个字符');
-            return false;
-        } else if (trimmed.length > 20) {
-            this.showError('昵称不能超过20个字符');
-            return false;
-        } else if (!/^[\u4e00-\u9fa5a-zA-Z0-9_-]+$/.test(trimmed)) {
-            this.showError('昵称只能包含中文、英文、数字、下划线和减号');
-            return false;
-        } else {
-            this.clearError();
-            return true;
+        if (trimmed.length < 2) {
+            return { valid: false, message: '昵称至少需要2个字符' };
+        }
+        
+        if (trimmed.length > 20) {
+            return { valid: false, message: '昵称不能超过20个字符' };
+        }
+        
+        if (!/^[\u4e00-\u9fa5a-zA-Z0-9_-]+$/.test(trimmed)) {
+            return { valid: false, message: '昵称只能包含中文、英文、数字、下划线和减号' };
+        }
+        
+        return { valid: true, message: '' };
+    }
+    
+    // 存储工具
+    static debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    }
+    
+    static throttle(func, limit) {
+        let inThrottle;
+        return function(...args) {
+            if (!inThrottle) {
+                func.apply(this, args);
+                inThrottle = true;
+                setTimeout(() => inThrottle = false, limit);
+            }
+        };
+    }
+    
+    // 通知系统
+    static showNotification(message, type = 'info', duration = 3000) {
+        // 移除现有通知
+        const existing = document.querySelector('.notification');
+        if (existing) existing.remove();
+        
+        const notification = Utils.createElement('div', `notification notification-${type}`, message);
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            Utils.fadeOut(notification).then(() => notification.remove());
+        }, duration);
+        
+        return notification;
+    }
+}
+// === JS_UTILS 结束 ===
+// === JS_STORAGE 开始 ===
+// 数据存储和管理类
+class StorageManager {
+    constructor() {
+        this.keys = CONFIG.STORAGE_KEYS;
+        this.init();
+    }
+    
+    init() {
+        // 初始化默认数据
+        if (!this.getUserData()) {
+            this.setUserData(DEFAULT_USER_DATA);
+        }
+        
+        if (!this.getGameData()) {
+            this.setGameData(DEFAULT_GAME_DATA);
         }
     }
-
-    showError(message) {
+    
+    // 用户数据管理
+    getUserData() {
+        try {
+            const data = localStorage.getItem(this.keys.USER_DATA);
+            return data ? { ...DEFAULT_USER_DATA, ...JSON.parse(data) } : null;
+        } catch (error) {
+            console.error('读取用户数据失败:', error);
+            return null;
+        }
+    }
+    
+    setUserData(data) {
+        try {
+            localStorage.setItem(this.keys.USER_DATA, JSON.stringify({
+                ...this.getUserData(),
+                ...data,
+                lastLogin: new Date().toISOString()
+            }));
+            return true;
+        } catch (error) {
+            console.error('保存用户数据失败:', error);
+            return false;
+        }
+    }
+    
+    updateUserData(updates) {
+        const current = this.getUserData() || DEFAULT_USER_DATA;
+        return this.setUserData({ ...current, ...updates });
+    }
+    
+    // 游戏数据管理
+    getGameData() {
+        try {
+            const data = localStorage.getItem(this.keys.GAME_STATE);
+            return data ? { ...DEFAULT_GAME_DATA, ...JSON.parse(data) } : null;
+        } catch (error) {
+            console.error('读取游戏数据失败:', error);
+            return null;
+        }
+    }
+    
+    setGameData(data) {
+        try {
+            localStorage.setItem(this.keys.GAME_STATE, JSON.stringify(data));
+            return true;
+        } catch (error) {
+            console.error('保存游戏数据失败:', error);
+            return false;
+        }
+    }
+    
+    updateGameData(updates) {
+        const current = this.getGameData() || DEFAULT_GAME_DATA;
+        return this.setGameData({ ...current, ...updates });
+    }
+    
+    // 货币操作
+    getCurrency(currencyType) {
+        const gameData = this.getGameData();
+        return gameData?.currency?.[currencyType] || 0;
+    }
+    
+    updateCurrency(currencyType, amount) {
+        const gameData = this.getGameData() || DEFAULT_GAME_DATA;
+        const newAmount = Math.max(0, (gameData.currency[currencyType] || 0) + amount);
+        
+        gameData.currency[currencyType] = newAmount;
+        return this.setGameData(gameData);
+    }
+    
+    hasEnoughCurrency(currencyType, amount) {
+        return this.getCurrency(currencyType) >= amount;
+    }
+    
+    // 抽奖记录
+    getLotteryHistory() {
+        try {
+            const history = localStorage.getItem(this.keys.LOTTERY_HISTORY);
+            return history ? JSON.parse(history) : [];
+        } catch (error) {
+            console.error('读取抽奖记录失败:', error);
+            return [];
+        }
+    }
+    
+    addLotteryRecord(record) {
+        try {
+            const history = this.getLotteryHistory();
+            history.unshift({
+                ...record,
+                timestamp: new Date().toISOString(),
+                id: Date.now()
+            });
+            
+            // 只保留最近100条记录
+            const trimmedHistory = history.slice(0, 100);
+            localStorage.setItem(this.keys.LOTTERY_HISTORY, JSON.stringify(trimmedHistory));
+            return true;
+        } catch (error) {
+            console.error('保存抽奖记录失败:', error);
+            return false;
+        }
+    }
+    
+    // 数据清理
+    clearUserData() {
+        localStorage.removeItem(this.keys.USER_DATA);
+    }
+    
+    clearGameData() {
+        localStorage.removeItem(this.keys.GAME_STATE);
+        localStorage.removeItem(this.keys.LOTTERY_HISTORY);
+    }
+    
+    clearAllData() {
+        this.clearUserData();
+        this.clearGameData();
+    }
+    
+    // 数据导出/导入
+    exportData() {
+        return {
+            user: this.getUserData(),
+            game: this.getGameData(),
+            lottery: this.getLotteryHistory(),
+            exportTime: new Date().toISOString()
+        };
+    }
+    
+    importData(data) {
+        try {
+            if (data.user) this.setUserData(data.user);
+            if (data.game) this.setGameData(data.game);
+            if (data.lottery) {
+                localStorage.setItem(this.keys.LOTTERY_HISTORY, JSON.stringify(data.lottery));
+            }
+            return true;
+        } catch (error) {
+            console.error('导入数据失败:', error);
+            return false;
+        }
+    }
+    
+    // 统计信息
+    getStats() {
+        const userData = this.getUserData() || DEFAULT_USER_DATA;
+        const gameData = this.getGameData() || DEFAULT_GAME_DATA;
+        const lotteryHistory = this.getLotteryHistory();
+        
+        return {
+            user: {
+                loginCount: userData.loginCount || 0,
+                violationPoints: userData.violationPoints || 0,
+                banCount: userData.banHistory?.length || 0
+            },
+            game: {
+                totalSpins: gameData.spinCount || 0,
+                totalGold: gameData.currency?.gold || 0,
+                totalDiamond: gameData.currency?.diamond || 0
+            },
+            lottery: {
+                totalSpins: lotteryHistory.length,
+                goldWins: lotteryHistory.filter(r => r.reward.type === 'gold').length,
+                lastWin: lotteryHistory[0]?.timestamp || null
+            }
+        };
+    }
+}
+// === JS_STORAGE 结束 ===
+// === JS_SCREEN_MANAGER 开始 ===
+// 屏幕管理和路由控制
+class ScreenManager {
+    constructor() {
+        this.screens = CONFIG.SCREENS;
+        this.currentScreen = null;
+        this.screenHistory = [];
+        this.init();
+    }
+    
+    init() {
+        this.hideAllScreens();
+        this.showScreen(this.screens.LOGIN);
+        this.bindGlobalEvents();
+    }
+    
+    // 屏幕显示控制
+    showScreen(screenId, addToHistory = true) {
+        // 验证屏幕ID
+        if (!Object.values(this.screens).includes(screenId)) {
+            console.error(`未知的屏幕ID: ${screenId}`);
+            return false;
+        }
+        
+        // 隐藏当前屏幕
+        if (this.currentScreen) {
+            this.hideScreen(this.currentScreen);
+        }
+        
+        // 显示新屏幕
+        const screenElement = document.getElementById(screenId);
+        if (screenElement) {
+            screenElement.classList.add('active');
+            this.currentScreen = screenId;
+            
+            // 添加到历史记录
+            if (addToHistory && screenId !== this.screens.LOGIN) {
+                this.screenHistory.push(screenId);
+            }
+            
+            // 触发屏幕显示事件
+            this.onScreenShow(screenId);
+            
+            console.log(`切换到屏幕: ${screenId}`);
+            return true;
+        }
+        
+        return false;
+    }
+    
+    hideScreen(screenId) {
+        const screenElement = document.getElementById(screenId);
+        if (screenElement) {
+            screenElement.classList.remove('active');
+        }
+    }
+    
+    hideAllScreens() {
+        Object.values(this.screens).forEach(screenId => {
+            this.hideScreen(screenId);
+        });
+    }
+    
+    // 屏幕历史管理
+    goBack() {
+        if (this.screenHistory.length > 0) {
+            const previousScreen = this.screenHistory.pop();
+            this.showScreen(previousScreen, false);
+            return true;
+        }
+        return false;
+    }
+    
+    clearHistory() {
+        this.screenHistory = [];
+    }
+    
+    // 屏幕事件处理
+    onScreenShow(screenId) {
+        // 屏幕特定的初始化逻辑
+        switch(screenId) {
+            case this.screens.LOGIN:
+                this.initLoginScreen();
+                break;
+            case this.screens.MENU:
+                this.initMenuScreen();
+                break;
+            case this.screens.GAME:
+                this.initGameScreen();
+                break;
+            case this.screens.INVITE:
+                this.initInviteScreen();
+                break;
+            case this.screens.MAIN:
+                this.initMainScreen();
+                break;
+        }
+        
+        // 触发自定义事件
+        this.triggerScreenEvent('screenShow', screenId);
+    }
+    
+    // 屏幕初始化方法
+    initLoginScreen() {
+        // 聚焦到输入框
+        setTimeout(() => {
+            const input = document.getElementById('nickname-input');
+            if (input) input.focus();
+        }, 100);
+        
+        // 检查已保存的用户
+        this.checkSavedUser();
+    }
+    
+    initMenuScreen() {
+        // 更新用户信息显示
+        this.updateMenuDisplay();
+    }
+    
+    initGameScreen() {
+        // 初始化游戏
+        if (window.gameManager) {
+            window.gameManager.init();
+        }
+    }
+    
+    initInviteScreen() {
+        // 初始化抽奖系统
+        if (window.lotteryManager) {
+            window.lotteryManager.init();
+        }
+    }
+    
+    initMainScreen() {
+        // 更新主界面状态
+        if (window.authManager) {
+            window.authManager.updateMainScreen();
+        }
+    }
+    
+    // 工具方法
+    checkSavedUser() {
+        const userData = window.storageManager.getUserData();
+        if (userData && userData.nickname) {
+            const input = document.getElementById('nickname-input');
+            if (input) {
+                input.value = userData.nickname;
+                input.placeholder = `上次用户: ${userData.nickname}`;
+            }
+        }
+    }
+    
+    updateMenuDisplay() {
+        const userData = window.storageManager.getUserData();
+        const usernameElement = document.getElementById('menu-username');
+        const devBadgeElement = document.getElementById('developer-badge');
+        
+        if (usernameElement && userData) {
+            usernameElement.textContent = userData.nickname || '用户';
+        }
+        
+        if (devBadgeElement && userData.isDeveloper) {
+            devBadgeElement.style.display = 'inline-block';
+        }
+    }
+    
+    // 事件系统
+    triggerScreenEvent(eventName, screenId) {
+        const event = new CustomEvent('screenChange', {
+            detail: { screenId, eventName }
+        });
+        document.dispatchEvent(event);
+    }
+    
+    // 全局事件绑定
+    bindGlobalEvents() {
+        // 键盘导航
+        document.addEventListener('keydown', (e) => {
+            // ESC键返回
+            if (e.key === 'Escape') {
+                if (this.currentScreen !== this.screens.LOGIN && 
+                    this.currentScreen !== this.screens.MENU) {
+                    e.preventDefault();
+                    this.goBack();
+                }
+            }
+            
+            // 开发者快捷键
+            if (e.ctrlKey && e.shiftKey) {
+                this.handleDeveloperShortcuts(e);
+            }
+        });
+        
+        // 屏幕变化事件监听
+        document.addEventListener('screenChange', (e) => {
+            console.log('屏幕变化:', e.detail);
+        });
+    }
+    
+    handleDeveloperShortcuts(e) {
+        if (!window.authManager || !window.authManager.isDeveloperMode) return;
+        
+        switch(e.key) {
+            case 'D': // Ctrl+Shift+D - 切换开发者面板
+                e.preventDefault();
+                if (window.authManager.toggleDeveloperPanel) {
+                    window.authManager.toggleDeveloperPanel();
+                }
+                break;
+            case 'R': // Ctrl+Shift+R - 重置数据
+                e.preventDefault();
+                if (window.authManager.resetData) {
+                    window.authManager.resetData();
+                }
+                break;
+            case 'G': // Ctrl+Shift+G - 添加金币
+                e.preventDefault();
+                if (window.lotteryManager) {
+                    window.lotteryManager.addCurrency('gold', 100);
+                }
+                break;
+        }
+    }
+    
+    // 获取当前屏幕信息
+    getCurrentScreen() {
+        return this.currentScreen;
+    }
+    
+    getScreenHistory() {
+        return [...this.screenHistory];
+    }
+    
+    isScreenActive(screenId) {
+        return this.currentScreen === screenId;
+    }
+}
+// === JS_SCREEN_MANAGER 结束 ===
+// === JS_AUTH_MANAGER 开始 ===
+// 用户认证和权限管理
+class AuthManager {
+    constructor(storageManager, screenManager) {
+        this.storage = storageManager;
+        this.screens = screenManager;
+        this.currentUser = null;
+        this.isDeveloperMode = false;
+        this.init();
+    }
+    
+    init() {
+        this.bindAuthEvents();
+        this.checkExistingSession();
+    }
+    
+    // 事件绑定
+    bindAuthEvents() {
+        // 登录表单事件
+        const nicknameInput = document.getElementById('nickname-input');
+        const startButton = document.getElementById('start-button');
+        
+        if (nicknameInput) {
+            nicknameInput.addEventListener('input', (e) => {
+                this.validateInput(e.target.value);
+            });
+            
+            nicknameInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    this.handleLogin();
+                }
+            });
+        }
+        
+        if (startButton) {
+            startButton.addEventListener('click', () => {
+                this.handleLogin();
+            });
+        }
+        
+        // 登出按钮
+        const logoutButton = document.getElementById('logout-btn');
+        if (logoutButton) {
+            logoutButton.addEventListener('click', () => {
+                this.handleLogout();
+            });
+        }
+    }
+    
+    // 输入验证
+    validateInput(nickname) {
+        const result = Utils.validateNickname(nickname);
+        this.showValidationResult(result);
+        return result.valid;
+    }
+    
+    showValidationResult(result) {
         const errorElement = document.getElementById('error-message');
         const button = document.getElementById('start-button');
         
-        errorElement.textContent = message;
-        button.disabled = true;
+        if (errorElement && button) {
+            errorElement.textContent = result.message;
+            button.disabled = !result.valid;
+            
+            const input = document.getElementById('nickname-input');
+            if (input) {
+                input.style.borderColor = result.valid ? '#48bb78' : '#e53e3e';
+            }
+        }
     }
-
-    clearError() {
-        const errorElement = document.getElementById('error-message');
-        const button = document.getElementById('start-button');
-        
-        errorElement.textContent = '';
-        button.disabled = false;
-    }
-
+    
+    // 登录处理
     async handleLogin() {
-        const nickname = document.getElementById('nickname-input').value.trim();
-        const button = document.getElementById('start-button');
+        const nicknameInput = document.getElementById('nickname-input');
+        if (!nicknameInput) return;
         
-        if (!this.validateNickname(nickname)) return;
+        const nickname = nicknameInput.value.trim();
         
-        // 显示加载状态
+        if (!this.validateInput(nickname)) return;
+        
+        // 设置加载状态
         this.setLoadingState(true);
         
         try {
-            // 模拟API调用
-            await this.simulateApiCall(1500);
+            // 模拟API调用延迟
+            await this.simulateApiCall(1000 + Math.random() * 500);
             
-            // 保存用户
-            this.saveUser(nickname);
-            
-            // 显示成功动画
-            await this.showSuccessAnimation();
-            
-            // 跳转到游戏界面
-            this.showScreen(this.screens.game);
+            // 检查开发者模式
+            if (nickname.toLowerCase() === CONFIG.DEVELOPER.NICKNAME) {
+                await this.handleDeveloperLogin(nickname);
+            } else {
+                await this.handleNormalLogin(nickname);
+            }
             
         } catch (error) {
-            this.showError('登录失败，请重试');
+            Utils.showNotification('登录失败，请重试', 'error');
+            console.error('登录错误:', error);
         } finally {
             this.setLoadingState(false);
         }
     }
-
+    
+    // 普通用户登录
+    async handleNormalLogin(nickname) {
+        // 保存用户数据
+        const userData = {
+            nickname: nickname,
+            isDeveloper: false,
+            loginCount: (this.storage.getUserData()?.loginCount || 0) + 1,
+            firstLogin: this.storage.getUserData()?.firstLogin || new Date().toISOString(),
+            lastLogin: new Date().toISOString()
+        };
+        
+        this.storage.setUserData(userData);
+        this.currentUser = userData;
+        
+        // 显示成功动画
+        await this.showLoginSuccess();
+        
+        // 跳转到主菜单
+        this.screens.showScreen(this.screens.screens.MENU);
+    }
+    
+    // 开发者模式登录
+    async handleDeveloperLogin(nickname) {
+        console.log('🎮 开发者模式激活');
+        
+        // 设置开发者数据
+        const userData = {
+            nickname: nickname,
+            isDeveloper: true,
+            loginCount: (this.storage.getUserData()?.loginCount || 0) + 1,
+            firstLogin: this.storage.getUserData()?.firstLogin || new Date().toISOString(),
+            lastLogin: new Date().toISOString()
+        };
+        
+        this.storage.setUserData(userData);
+        this.currentUser = userData;
+        this.isDeveloperMode = true;
+        
+        // 显示开发者特效
+        await this.showDeveloperWelcome();
+        
+        // 初始化开发者工具
+        this.initDeveloperTools();
+        
+        // 跳转到主菜单
+        this.screens.showScreen(this.screens.screens.MENU);
+    }
+    
+    // 登录UI效果
     setLoadingState(loading) {
         const button = document.getElementById('start-button');
-        const buttonText = button.querySelector('.btn-text');
-        const spinner = button.querySelector('.loading-spinner');
+        const buttonText = button?.querySelector('.btn-text');
+        const spinner = button?.querySelector('.loading-spinner');
+        
+        if (!button || !buttonText) return;
         
         if (loading) {
             button.disabled = true;
             buttonText.textContent = '登录中...';
-            spinner.style.display = 'block';
+            if (spinner) spinner.style.display = 'block';
         } else {
             button.disabled = false;
             buttonText.textContent = '开始体验';
-            spinner.style.display = 'none';
+            if (spinner) spinner.style.display = 'none';
         }
     }
-
-    simulateApiCall(duration = 1000) {
-        return new Promise(resolve => setTimeout(resolve, duration));
-    }
-
-    saveUser(nickname) {
-        this.currentUser = nickname;
-        localStorage.setItem('current_user', nickname);
-        localStorage.setItem('user_login_time', new Date().toISOString());
-    }
-
-    async showSuccessAnimation() {
+    
+    async showLoginSuccess() {
         const button = document.getElementById('start-button');
+        if (!button) return;
+        
+        const originalText = button.querySelector('.btn-text').textContent;
         const originalBackground = button.style.background;
         
-        button.style.background = 'linear-gradient(135deg, #48bb78, #38a169)';
         button.querySelector('.btn-text').textContent = '登录成功！';
+        button.style.background = 'linear-gradient(135deg, #48bb78, #38a169)';
         
-        await this.simulateApiCall(800);
+        await new Promise(resolve => setTimeout(resolve, 800));
+        
+        button.querySelector('.btn-text').textContent = originalText;
+        button.style.background = originalBackground;
     }
-
-    checkExistingUser() {
-        const storedUser = localStorage.getItem('current_user');
-        if (storedUser) {
-            document.getElementById('nickname-input').value = storedUser;
-            document.getElementById('nickname-input').placeholder = `上次用户: ${storedUser}`;
-            this.validateNickname(storedUser);
-        }
+    
+    async showDeveloperWelcome() {
+        const button = document.getElementById('start-button');
+        if (!button) return;
+        
+        button.querySelector('.btn-text').textContent = '开发者模式激活！';
+        button.style.background = 'linear-gradient(135deg, #ff6b6b, #ee5a52)';
+        
+        // 添加脉冲动画
+        document.body.style.animation = 'developerPulse 2s infinite';
+        
+        await new Promise(resolve => setTimeout(resolve, 1000));
     }
-
-    // 游戏功能
-    initGame() {
-        console.log('初始化贪吃蛇游戏...');
-        // 这里将实现贪吃蛇游戏逻辑
-        document.getElementById('player-name').textContent = this.currentUser || '游客';
+    
+    // 开发者工具
+    initDeveloperTools() {
+        this.createDeveloperBadge();
+        this.setupDeveloperShortcuts();
+        this.createDeveloperPanel();
         
-        // 临时显示游戏界面
-        this.showGameInstructions();
+        Utils.showNotification('开发者工具已激活', 'success');
     }
-
-    showGameInstructions() {
-        alert(`欢迎 ${this.currentUser}！\n\n游戏说明：\n• 使用方向键控制蛇的移动\n• 躲避墙壁和自身\n• 游戏30秒后自动结束\n• 你的选择将影响后续体验`);
+    
+    createDeveloperBadge() {
+        const existingBadge = document.getElementById('developer-badge');
+        if (existingBadge) return;
+        
+        const badge = Utils.createElement('div', 'developer-badge', '🔧 开发者模式');
+        badge.id = 'developer-badge';
+        document.body.appendChild(badge);
     }
-
-    togglePause() {
-        // 游戏暂停/继续逻辑
-        console.log('游戏暂停/继续');
+    
+    setupDeveloperShortcuts() {
+        // 快捷键已经在ScreenManager中处理
+        console.log('🔧 开发者快捷键已启用');
     }
-
-    // 投诉处理
-    handleComplaint(complained) {
-        if (complained) {
-            console.log('用户选择投诉游戏');
-            this.violationPoints += 2; // 投诉增加违规点
-            this.addBanRecord('投诉游戏系统', '警告', 2);
-        } else {
-            console.log('用户选择不投诉');
-        }
-        
-        this.showScreen(this.screens.main);
+    
+    createDeveloperPanel() {
+        // 开发者面板创建逻辑
+        // 这里可以添加可视化开发者工具
     }
-
-    // 主界面功能
-    updateMainScreen() {
-        document.getElementById('current-user').textContent = this.currentUser || '用户';
-        document.getElementById('violation-points').textContent = this.violationPoints;
-        this.updateBanHistory();
-    }
-
-    simulateAction(actionType) {
-        const actions = {
-            post: { points: 1, message: '发布内容' },
-            comment: { points: 1, message: '发表评论' },
-            share: { points: 1, message: '分享内容' }
-        };
-        
-        const action = actions[actionType];
-        if (!action) return;
-        
-        this.violationPoints += action.points;
-        this.addBanRecord(action.message, '检测中', action.points);
-        
-        // 检查是否触发封禁
-        this.checkForBan();
-        
-        this.updateMainScreen();
-    }
-
-    addBanRecord(action, status, points) {
-        const record = {
-            id: Date.now(),
-            action,
-            status,
-            points,
-            timestamp: new Date().toLocaleTimeString()
-        };
-        
-        this.banHistory.unshift(record);
-    }
-
-    updateBanHistory() {
-        const banList = document.getElementById('ban-list');
-        const noRecords = banList.querySelector('.no-records');
-        
-        if (this.banHistory.length === 0) {
-            noRecords.style.display = 'block';
-            return;
-        }
-        
-        noRecords.style.display = 'none';
-        
-        // 清空现有记录（除了无记录提示）
-        Array.from(banList.children).forEach(child => {
-            if (!child.classList.contains('no-records')) {
-                child.remove();
+    
+    // 会话管理
+    checkExistingSession() {
+        const userData = this.storage.getUserData();
+        if (userData && userData.nickname) {
+            const input = document.getElementById('nickname-input');
+            if (input) {
+                input.value = userData.nickname;
+                input.placeholder = `上次用户: ${userData.nickname}`;
             }
-        });
+        }
+    }
+    
+    // 登出处理
+    handleLogout() {
+        // 清除会话数据（保留其他数据）
+        const userData = this.storage.getUserData();
+        if (userData) {
+            userData.lastLogin = new Date().toISOString();
+            this.storage.setUserData(userData);
+        }
         
-        // 添加新记录
-        this.banHistory.slice(0, 5).forEach(record => {
-            const recordElement = document.createElement('div');
-            recordElement.className = 'ban-record';
-            recordElement.innerHTML = `
-                <span>${record.action}</span>
-                <span class="status-${record.status}">${record.status}</span>
-                <span>+${record.points}</span>
-                <span>${record.timestamp}</span>
-            `;
-            banList.appendChild(recordElement);
-        });
+        this.currentUser = null;
+        this.isDeveloperMode = false;
+        
+        // 移除开发者徽章
+        const badge = document.getElementById('developer-badge');
+        if (badge) badge.remove();
+        
+        // 返回登录界面
+        this.screens.showScreen(this.screens.screens.LOGIN);
+        this.screens.clearHistory();
+        
+        Utils.showNotification('已退出登录', 'info');
     }
-
-    checkForBan() {
-        if (this.violationPoints >= 10) {
-            this.triggerPermanentBan();
-        } else if (this.violationPoints >= 5) {
-            this.triggerTemporaryBan();
+    
+    // 工具方法
+    simulateApiCall(duration) {
+        return new Promise(resolve => setTimeout(resolve, duration));
+    }
+    
+    getCurrentUser() {
+        return this.currentUser;
+    }
+    
+    isLoggedIn() {
+        return !!this.currentUser;
+    }
+    
+    isDeveloper() {
+        return this.isDeveloperMode;
+    }
+    
+    // 主界面更新
+    updateMainScreen() {
+        // 更新主界面用户信息
+        const userData = this.storage.getUserData();
+        const userElement = document.getElementById('current-user');
+        const pointsElement = document.getElementById('violation-points');
+        
+        if (userElement && userData) {
+            userElement.textContent = userData.nickname || '用户';
         }
-    }
-
-    triggerTemporaryBan() {
-        console.log('触发临时封禁');
-        // 实现临时封禁逻辑
-    }
-
-    triggerPermanentBan() {
-        console.log('触发永久封禁');
-        // 实现永久封禁逻辑
-    }
-
-    // 键盘事件处理
-    handleKeyPress(event) {
-        // 游戏控制将在贪吃蛇游戏中实现
-        if (this.currentScreen === this.screens.game) {
-            this.handleGameControls(event);
+        
+        if (pointsElement) {
+            pointsElement.textContent = userData?.violationPoints || 0;
         }
-    }
-
-    handleGameControls(event) {
-        // 贪吃蛇游戏控制逻辑
-        console.log('游戏控制:', event.key);
     }
 }
-
-// 贪吃蛇游戏类
-class SnakeGame {
-    constructor(canvasId) {
+// === JS_AUTH_MANAGER 结束 ===
+// === JS_GAME_MANAGER 开始 ===
+// 贪吃蛇游戏实现
+class GameManager {
+    constructor(canvasId = 'snake-canvas') {
         this.canvas = document.getElementById(canvasId);
         this.ctx = this.canvas.getContext('2d');
-        this.init();
-    }
-
-    init() {
-        this.gridSize = 20;
-        this.tileCount = this.canvas.width / this.gridSize;
+        this.config = CONFIG.GAME;
+        
+        this.gridSize = this.config.GRID_SIZE;
+        this.tileCount = this.config.TILE_COUNT;
+        this.updateInterval = this.config.UPDATE_INTERVAL;
+        this.gameDuration = this.config.GAME_DURATION;
+        
         this.resetGame();
+        this.bindControls();
     }
-
+    
+    // 游戏状态重置
     resetGame() {
-        this.snake = [{x: 10, y: 10}];
+        this.snake = [
+            {x: 10, y: 10}
+        ];
         this.food = this.generateFood();
         this.dx = 0;
         this.dy = 0;
         this.score = 0;
         this.gameTime = 0;
+        this.isRunning = false;
         this.isPaused = false;
         this.gameOver = false;
+        this.lastUpdateTime = 0;
+        this.startTime = 0;
+        
+        this.updateDisplay();
     }
-
+    
+    // 游戏初始化
+    init() {
+        this.resetGame();
+        this.startGame();
+    }
+    
+    // 游戏开始
+    startGame() {
+        if (this.isRunning) return;
+        
+        this.isRunning = true;
+        this.startTime = Date.now();
+        this.lastUpdateTime = performance.now();
+        
+        // 开始游戏计时器
+        this.gameTimer = setInterval(() => {
+            this.gameTime = Math.floor((Date.now() - this.startTime) / 1000);
+            this.updateTimeDisplay();
+            
+            // 检查游戏时间结束
+            if (this.gameTime >= this.gameDuration / 1000 && !this.gameOver) {
+                this.endGame('timeout');
+            }
+        }, 1000);
+        
+        // 开始游戏循环
+        this.gameLoop();
+    }
+    
+    // 游戏主循环
+    gameLoop(currentTime = performance.now()) {
+        if (!this.isRunning || this.isPaused || this.gameOver) return;
+        
+        const deltaTime = currentTime - this.lastUpdateTime;
+        
+        if (deltaTime > this.updateInterval) {
+            this.update();
+            this.draw();
+            this.lastUpdateTime = currentTime;
+        }
+        
+        requestAnimationFrame((time) => this.gameLoop(time));
+    }
+    
+    // 游戏逻辑更新
+    update() {
+        if (this.dx === 0 && this.dy === 0) return;
+        
+        // 移动蛇头
+        const head = {x: this.snake[0].x + this.dx, y: this.snake[0].y + this.dy};
+        
+        // 检查碰撞
+        if (this.checkCollision(head)) {
+            this.endGame('collision');
+            return;
+        }
+        
+        this.snake.unshift(head);
+        
+        // 检查是否吃到食物
+        if (head.x === this.food.x && head.y === this.food.y) {
+            this.score += 10;
+            this.food = this.generateFood();
+            this.updateScoreDisplay();
+        } else {
+            this.snake.pop();
+        }
+    }
+    
+    // 碰撞检测
+    checkCollision(position) {
+        // 墙壁碰撞
+        if (position.x < 0 || position.x >= this.tileCount || 
+            position.y < 0 || position.y >= this.tileCount) {
+            return true;
+        }
+        
+        // 自身碰撞
+        for (let i = 0; i < this.snake.length; i++) {
+            if (position.x === this.snake[i].x && position.y === this.snake[i].y) {
+                return true;
+            }
+        }
+        
+        return false;
+    }
+    
+    // 生成食物
     generateFood() {
+        let newFood;
+        let onSnake;
+        
+        do {
+            newFood = {
+                x: Math.floor(Math.random() * this.tileCount),
+                y: Math.floor(Math.random() * this.tileCount)
+            };
+            onSnake = this.snake.some(segment => 
+                segment.x === newFood.x && segment.y === newFood.y
+            );
+        } while (onSnake);
+        
+        return newFood;
+    }
+    
+    // 绘制游戏
+    draw() {
+        // 清空画布
+        this.ctx.fillStyle = '#1a202c';
+        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        
+        // 绘制食物
+        this.ctx.fillStyle = '#e53e3e';
+        this.ctx.fillRect(
+            this.food.x * this.gridSize, 
+            this.food.y * this.gridSize, 
+            this.gridSize - 2, 
+            this.gridSize - 2
+        );
+        
+        // 绘制蛇
+        this.snake.forEach((segment, index) => {
+            if (index === 0) {
+                // 蛇头
+                this.ctx.fillStyle = '#48bb78';
+            } else {
+                // 蛇身
+                this.ctx.fillStyle = '#38a169';
+            }
+            this.ctx.fillRect(
+                segment.x * this.gridSize, 
+                segment.y * this.gridSize, 
+                this.gridSize - 2, 
+                this.gridSize - 2
+            );
+        });
+    }
+    
+    // 控制绑定
+    bindControls() {
+        document.addEventListener('keydown', (e) => {
+            if (this.gameOver) return;
+            
+            switch(e.key) {
+                case 'ArrowUp':
+                    if (this.dy !== 1) {
+                        this.dx = 0;
+                        this.dy = -1;
+                    }
+                    break;
+                case 'ArrowDown':
+                    if (this.dy !== -1) {
+                        this.dx = 0;
+                        this.dy = 1;
+                    }
+                    break;
+                case 'ArrowLeft':
+                    if (this.dx !== 1) {
+                        this.dx = -1;
+                        this.dy = 0;
+                    }
+                    break;
+                case 'ArrowRight':
+                    if (this.dx !== -1) {
+                        this.dx = 1;
+                        this.dy = 0;
+                    }
+                    break;
+                case ' ':
+                    this.togglePause();
+                    break;
+                case 'Escape':
+                    this.pauseGame();
+                    break;
+            }
+        });
+        
+        // 触摸控制（移动端）
+        this.setupTouchControls();
+        
+        // 游戏控制按钮
+        this.bindControlButtons();
+    }
+    
+    setupTouchControls() {
+        let touchStartX = 0;
+        let touchStartY = 0;
+        
+        this.canvas.addEventListener('touchstart', (e) => {
+            touchStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
+            e.preventDefault();
+        });
+        
+        this.canvas.addEventListener('touchmove', (e) => {
+            if (!touchStartX || !touchStartY) return;
+            
+            const touchEndX = e.touches[0].clientX;
+            const touchEndY = e.touches[0].clientY;
+            
+            const dx = touchEndX - touchStartX;
+            const dy = touchEndY - touchStartY;
+            
+            if (Math.abs(dx) > Math.abs(dy)) {
+                // 水平滑动
+                if (dx > 0 && this.dx !== -1) {
+                    this.dx = 1;
+                    this.dy = 0;
+                } else if (dx < 0 && this.dx !== 1) {
+                    this.dx = -1;
+                    this.dy = 0;
+                }
+            } else {
+                // 垂直滑动
+                if (dy > 0 && this.dy !== -1) {
+                    this.dx = 0;
+                    this.dy = 1;
+                } else if (dy < 0 && this.dy !== 1) {
+                    this.dx = 0;
+                    this.dy = -1;
+                }
+            }
+            
+            touchStartX = null;
+            touchStartY = null;
+            e.preventDefault();
+        });
+    }
+    
+    bindControlButtons() {
+        const pauseBtn = document.getElementById('pause-btn');
+        const exitBtn = document.getElementById('exit-btn');
+        
+        if (pauseBtn) {
+            pauseBtn.onclick = () => this.togglePause();
+        }
+        
+        if (exitBtn) {
+            exitBtn.onclick = () => this.exitToMenu();
+        }
+    }
+    
+    // 游戏控制
+    togglePause() {
+        if (this.gameOver) return;
+        
+        this.isPaused = !this.isPaused;
+        this.updatePauseButton();
+        
+        if (!this.isPaused) {
+            this.lastUpdateTime = performance.now();
+            this.gameLoop();
+        }
+        
+        Utils.showNotification(this.isPaused ? '游戏已暂停' : '游戏继续', 'info');
+    }
+    
+    pauseGame() {
+        if (!this.isPaused) {
+            this.isPaused = true;
+            this.updatePauseButton();
+        }
+    }
+    
+    resumeGame() {
+        if (this.isPaused) {
+            this.isPaused = false;
+            this.updatePauseButton();
+            this.lastUpdateTime = performance.now();
+            this.gameLoop();
+        }
+    }
+    
+    updatePauseButton() {
+        const pauseBtn = document.getElementById('pause-btn');
+        if (pauseBtn) {
+            pauseBtn.textContent = this.isPaused ? '▶️ 继续' : '⏸️ 暂停';
+        }
+    }
+    
+    // 游戏结束
+    endGame(reason = 'collision') {
+        this.isRunning = false;
+        this.gameOver = true;
+        clearInterval(this.gameTimer);
+        
+        const reasons = {
+            'collision': '游戏结束！蛇撞到了墙壁或自己。',
+            'timeout': '时间到！游戏自动结束。'
+        };
+        
+        Utils.showNotification(reasons[reason] || '游戏结束', 'info');
+        
+        // 保存游戏结果
+        this.saveGameResult();
+        
+        // 显示结果界面
+        setTimeout(() => {
+            this.showGameOverScreen();
+        }, 1000);
+    }
+    
+    saveGameResult() {
+        const gameData = {
+            finalScore: this.score,
+            gameTime: this.gameTime,
+            snakeLength: this.snake.length,
+            endReason: this.gameOver ? 'completed' : 'crashed',
+            timestamp: new Date().toISOString()
+        };
+        
+        // 可以保存到存储管理器
+        console.log('游戏结果:', gameData);
+    }
+    
+    showGameOverScreen() {
+        // 更新最终分数显示
+        const finalScoreElement = document.getElementById('final-score');
+        if (finalScoreElement) {
+            finalScoreElement.textContent = this.score;
+        }
+        
+        // 切换到投诉选择界面
+        if (window.screenManager) {
+            window.screenManager.showScreen(CONFIG.SCREENS.COMPLAINT);
+        }
+    }
+    
+    exitToMenu() {
+        this.pauseGame();
+        if (window.screenManager) {
+            window.screenManager.showScreen(CONFIG.SCREENS.MENU);
+        }
+    }
+    
+    // 显示更新
+    updateDisplay() {
+        this.updateScoreDisplay();
+        this.updateTimeDisplay();
+        this.updateLengthDisplay();
+    }
+    
+    updateScoreDisplay() {
+        const scoreElement = document.getElementById('score');
+        if (scoreElement) {
+            scoreElement.textContent = this.score;
+        }
+    }
+    
+    updateTimeDisplay() {
+        const timeElement = document.getElementById('game-time');
+        if (timeElement) {
+            timeElement.textContent = `${this.gameTime}秒`;
+        }
+    }
+    
+    updateLengthDisplay() {
+        const lengthElement = document.getElementById('snake-length');
+        if (lengthElement) {
+            lengthElement.textContent = this.snake.length;
+        }
+    }
+    
+    // 游戏状态获取
+    getGameState() {
         return {
-            x: Math.floor(Math.random() * this.tileCount),
-            y: Math.floor(Math.random() * this.tileCount)
+            isRunning: this.isRunning,
+            isPaused: this.isPaused,
+            isGameOver: this.gameOver,
+            score: this.score,
+            time: this.gameTime,
+            length: this.snake.length
         };
     }
-
-    draw() {
-        // 绘制游戏逻辑
-    }
-
-    update() {
-        // 更新游戏状态
+    
+    // 销毁游戏
+    destroy() {
+        this.isRunning = false;
+        clearInterval(this.gameTimer);
     }
 }
+// === JS_GAME_MANAGER 结束 ===
+// === JS_LOTTERY_MANAGER_1 开始 ===
+// 抽奖和邀请助力系统 - 第一部分：核心逻辑
+class LotteryManager {
+    constructor(storageManager) {
+        this.storage = storageManager;
+        this.isSpinning = false;
+        this.lotteryConfig = CONFIG.LOTTERY;
+        this.init();
+    }
+    
+    init() {
+        this.loadGameData();
+        this.bindEvents();
+        this.updateDisplay();
+    }
+    
+    // 数据管理
+    loadGameData() {
+        const gameData = this.storage.getGameData() || DEFAULT_GAME_DATA;
+        this.currency = { ...gameData.currency };
+        this.spinCount = gameData.spinCount || 0;
+        this.pityCounter = gameData.pityCounter || 0;
+        this.lotteryHistory = this.storage.getLotteryHistory();
+    }
+    
+    saveGameData() {
+        const gameData = {
+            currency: this.currency,
+            spinCount: this.spinCount,
+            pityCounter: this.pityCounter,
+            lastUpdate: new Date().toISOString()
+        };
+        
+        this.storage.setGameData(gameData);
+    }
+    
+    // 事件绑定
+    bindEvents() {
+        // 抽奖按钮
+        const spinBtn = document.getElementById('spin-button');
+        if (spinBtn) {
+            spinBtn.addEventListener('click', () => {
+                this.handleSpin();
+            });
+        }
+        
+        // 兑换按钮
+        document.addEventListener('click', (e) => {
+            if (e.target.classList.contains('exchange-btn')) {
+                const from = e.target.dataset.from;
+                const to = e.target.dataset.to;
+                const rate = parseInt(e.target.dataset.rate);
+                this.handleExchange(from, to, rate);
+            }
+            
+            if (e.target.classList.contains('invite-btn')) {
+                const reward = parseInt(e.target.dataset.reward);
+                this.handleInvite(reward);
+            }
+        });
+        
+        // 模拟邀请按钮
+        const simulateBtn = document.getElementById('simulate-invite');
+        if (simulateBtn) {
+            simulateBtn.addEventListener('click', () => {
+                this.simulateMultipleInvites();
+            });
+        }
+        
+        // 返回按钮
+        const backBtn = document.getElementById('back-to-menu');
+        if (backBtn) {
+            backBtn.addEventListener('click', () => {
+                if (window.screenManager) {
+                    window.screenManager.showScreen(CONFIG.SCREENS.MENU);
+                }
+            });
+        }
+    }
+    
+    // 抽奖逻辑
+    async handleSpin() {
+        if (this.isSpinning) return;
+        
+        // 检查金币是否足够
+        if (!this.hasEnoughCurrency('gold', this.lotteryConfig.SPIN_COST)) {
+            Utils.showNotification('金币不足，无法抽奖！', 'error');
+            return;
+        }
+        
+        this.isSpinning = true;
+        
+        try {
+            // 扣除金币
+            this.deductCurrency('gold', this.lotteryConfig.SPIN_COST);
+            
+            // 开始旋转动画
+            await this.startSpinAnimation();
+            
+            // 计算奖励
+            const reward = this.calculateReward();
+            
+            // 发放奖励
+            this.addCurrency(reward.type, reward.amount);
+            
+            // 记录抽奖
+            this.recordSpin(reward);
+            
+            // 更新显示
+            this.updateDisplay();
+            
+            // 显示结果
+            this.showReward(reward);
+            
+        } catch (error) {
+            console.error('抽奖错误:', error);
+            Utils.showNotification('抽奖失败，请重试', 'error');
+        } finally {
+            this.isSpinning = false;
+            this.updateSpinButton();
+        }
+    }
+    
+    // 抽奖动画
+    async startSpinAnimation() {
+        const wheel = document.getElementById('lottery-wheel');
+        if (!wheel) return;
+        
+        // 添加旋转类
+        wheel.classList.add('spinning');
+        
+        // 等待动画完成
+        await new Promise(resolve => {
+            setTimeout(() => {
+                wheel.classList.remove('spinning');
+                resolve();
+            }, 3000);
+        });
+    }
+    
+    // 奖励计算
+    calculateReward() {
+        this.spinCount++;
+        this.pityCounter++;
+        
+        // 保底机制
+        if (this.pityCounter >= this.lotteryConfig.PITY_THRESHOLD) {
+            this.pityCounter = 0;
+            return { type: 'gold', amount: 1, isGold: true };
+        }
+        
+        // 正常概率计算
+        const random = Math.random();
+        if (random < this.lotteryConfig.BASE_GOLD_CHANCE) {
+            this.pityCounter = 0;
+            return { type: 'gold', amount: 1, isGold: true };
+        }
+        
+        // 普通奖励（永远差一点）
+        return { 
+            type: 'diamond', 
+            amount: 9, // 给9个，差1个到10
+            isGold: false 
+        };
+    }
+    
+    // 货币操作
+    hasEnoughCurrency(currencyType, amount) {
+        return (this.currency[currencyType] || 0) >= amount;
+    }
+    
+    deductCurrency(currencyType, amount) {
+        if (this.hasEnoughCurrency(currencyType, amount)) {
+            this.currency[currencyType] -= amount;
+            this.saveGameData();
+            return true;
+        }
+        return false;
+    }
+    
+    addCurrency(currencyType, amount) {
+        this.currency[currencyType] = (this.currency[currencyType] || 0) + amount;
+        this.saveGameData();
+        return true;
+    }
+    
+    // 兑换处理
+    handleExchange(from, to, rate) {
+        if (!this.hasEnoughCurrency(from, rate)) {
+            Utils.showNotification(`${this.getCurrencyName(from)}不足！`, 'error');
+            return;
+        }
+        
+        this.deductCurrency(from, rate);
+        this.addCurrency(to, 1);
+        
+        Utils.showNotification(
+            `兑换成功！${rate}${this.getCurrencyIcon(from)} → 1${this.getCurrencyIcon(to)}`,
+            'success'
+        );
+        
+        this.updateDisplay();
+    }
+    
+    // 邀请助力
+    handleInvite(reward) {
+        this.addCurrency('welfare', reward);
+        
+        Utils.showNotification(
+            `邀请成功！获得 ${reward}${this.getCurrencyIcon('welfare')}`,
+            'success'
+        );
+        
+        // 模拟网络延迟
+        setTimeout(() => {
+            Utils.showNotification('好友已成功助力！', 'info');
+        }, 1000);
+        
+        this.updateDisplay();
+    }
+    
+    simulateMultipleInvites() {
+        const rewards = [5, 10, 20, 5, 10, 50];
+        let total = 0;
+        
+        rewards.forEach((reward, index) => {
+            setTimeout(() => {
+                this.addCurrency('welfare', reward);
+                total += reward;
+                this.updateDisplay();
+                
+                if (index === rewards.length - 1) {
+                    Utils.showNotification(`模拟完成！共获得 ${total}🎫`, 'success');
+                }
+            }, index * 500);
+        });
+    }
+    
+    // 记录管理
+    recordSpin(reward) {
+        const record = {
+            id: Date.now(),
+            reward: reward,
+            timestamp: new Date().toLocaleTimeString('zh-CN'),
+            spinCount: this.spinCount
+        };
+        
+        this.lotteryHistory.unshift(record);
+        this.storage.addLotteryRecord(record);
+    }
+    
+    // 显示更新
+    updateDisplay() {
+        this.updateCurrencyDisplay();
+        this.updateSpinButton();
+        this.updateLotteryHistory();
+        this.updatePityCounter();
+    }
+    
+    updateCurrencyDisplay() {
+        // 更新所有货币显示
+        Object.keys(this.currency).forEach(currency => {
+            const element = document.getElementById(`${currency}-amount`);
+            if (element) {
+                element.textContent = this.currency[currency];
+            }
+        });
+    }
+    
+    updateSpinButton() {
+        const spinBtn = document.getElementById('spin-button');
+        if (!spinBtn) return;
+        
+        const canSpin = this.hasEnoughCurrency('gold', this.lotteryConfig.SPIN_COST);
+        spinBtn.disabled = !canSpin || this.isSpinning;
+        
+        if (this.isSpinning) {
+            spinBtn.innerHTML = '<span class="spin-text">抽奖中...</span>';
+        } else {
+            spinBtn.innerHTML = `
+                <span class="spin-text">抽奖一次</span>
+                <span class="spin-cost">消耗: ${this.lotteryConfig.SPIN_COST}🪙</span>
+            `;
+        }
+    }
+    
+    updateLotteryHistory() {
+        const historyContainer = document.getElementById('lottery-history');
+        if (!historyContainer) return;
+        
+        const emptyMsg = historyContainer.querySelector('.history-empty');
+        
+        if (this.lotteryHistory.length === 0) {
+            if (emptyMsg) emptyMsg.style.display = 'block';
+            return;
+        }
+        
+        if (emptyMsg) emptyMsg.style.display = 'none';
+        
+        // 清空现有记录
+        Array.from(historyContainer.children).forEach(child => {
+            if (!child.classList.contains('history-empty')) {
+                child.remove();
+            }
+        });
+        
+        // 添加新记录（最多10条）
+        this.lotteryHistory.slice(0, 10).forEach(record => {
+            const historyItem = Utils.createElement('div', 'history-item');
+            historyItem.innerHTML = `
+                <span>第${record.spinCount}抽</span>
+                <span class="history-reward">${record.reward.amount}${this.getCurrencyIcon(record.reward.type)}</span>
+                <span class="history-time">${record.timestamp}</span>
+            `;
+            
+            if (record.reward.isGold) {
+                historyItem.style.background = 'rgba(255, 215, 0, 0.2)';
+            }
+            
+            historyContainer.appendChild(historyItem);
+        });
+    }
+    
+    updatePityCounter() {
+        const pityElement = document.getElementById('pity-count');
+        const chanceElement = document.getElementById('gold-chance');
+        
+        if (pityElement) {
+            pityElement.textContent = this.pityCounter;
+        }
+        
+        if (chanceElement) {
+            // 显示虚假概率（实际概率的10倍）
+            const displayChance = (this.lotteryConfig.BASE_GOLD_CHANCE * 1000).toFixed(1);
+            chanceElement.textContent = `${displayChance}%`;
+        }
+    }
+// === JS_LOTTERY_MANAGER_1 结束 ===
+// === JS_LOTTERY_MANAGER_2 开始 ===
+// 抽奖和邀请助力系统 - 第二部分：显示和工具方法
 
-// 页面加载完成后初始化
+    // 奖励显示
+    showReward(reward) {
+        if (reward.isGold) {
+            this.showGoldAnimation();
+            Utils.showNotification('🎉 恭喜获得金币！', 'success', 5000);
+        } else {
+            Utils.showNotification(
+                `获得了 ${reward.amount} ${this.getCurrencyName(reward.type)}`,
+                'info'
+            );
+        }
+    }
+    
+    showGoldAnimation() {
+        const goldEffect = Utils.createElement('div', 'gold-effect', '🪙');
+        goldEffect.style.cssText = `
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 4em;
+            z-index: 10000;
+            animation: goldPop 1s ease-out;
+        `;
+        
+        document.body.appendChild(goldEffect);
+        
+        setTimeout(() => {
+            goldEffect.remove();
+        }, 1000);
+    }
+    
+    // 工具函数
+    getCurrencyIcon(currencyType) {
+        const icons = {
+            gold: '🪙',
+            diamond: '💎',
+            luck: '🍀',
+            welfare: '🎫'
+        };
+        return icons[currencyType] || '❓';
+    }
+    
+    getCurrencyName(currencyType) {
+        const names = {
+            gold: '金币',
+            diamond: '钻石',
+            luck: '幸运值',
+            welfare: '福利值'
+        };
+        return names[currencyType] || '未知货币';
+    }
+    
+    // 开发者工具
+    addCurrency(currencyType, amount) {
+        this.currency[currencyType] = (this.currency[currencyType] || 0) + amount;
+        this.saveGameData();
+        this.updateDisplay();
+        
+        Utils.showNotification(`+${amount}${this.getCurrencyIcon(currencyType)}`, 'success');
+    }
+    
+    resetData() {
+        this.currency = { ...DEFAULT_GAME_DATA.currency };
+        this.spinCount = 0;
+        this.pityCounter = 0;
+        this.lotteryHistory = [];
+        this.storage.clearGameData();
+        this.updateDisplay();
+        
+        Utils.showNotification('抽奖数据已重置', 'info');
+    }
+    
+    // 调试方法
+    enableDebugMode() {
+        console.log('🎰 抽奖系统调试模式已启用');
+        console.log('当前货币:', this.currency);
+        console.log('抽奖次数:', this.spinCount);
+        console.log('保底计数:', this.pityCounter);
+        console.log('抽奖记录:', this.lotteryHistory);
+    }
+    
+    // 统计信息
+    getStats() {
+        return {
+            totalSpins: this.spinCount,
+            totalGold: this.currency.gold || 0,
+            totalDiamond: this.currency.diamond || 0,
+            totalLuck: this.currency.luck || 0,
+            totalWelfare: this.currency.welfare || 0,
+            pityCounter: this.pityCounter,
+            goldWins: this.lotteryHistory.filter(r => r.reward.isGold).length,
+            winRate: this.spinCount > 0 ? 
+                (this.lotteryHistory.filter(r => r.reward.isGold).length / this.spinCount * 100).toFixed(2) + '%' : '0%'
+        };
+    }
+    
+    // 导出数据
+    exportData() {
+        return {
+            currency: this.currency,
+            spinCount: this.spinCount,
+            pityCounter: this.pityCounter,
+            lotteryHistory: this.lotteryHistory,
+            exportTime: new Date().toISOString()
+        };
+    }
+    
+    // 导入数据
+    importData(data) {
+        try {
+            if (data.currency) this.currency = { ...data.currency };
+            if (data.spinCount) this.spinCount = data.spinCount;
+            if (data.pityCounter) this.pityCounter = data.pityCounter;
+            if (data.lotteryHistory) this.lotteryHistory = [...data.lotteryHistory];
+            
+            this.saveGameData();
+            this.updateDisplay();
+            
+            Utils.showNotification('数据导入成功', 'success');
+            return true;
+        } catch (error) {
+            console.error('数据导入失败:', error);
+            Utils.showNotification('数据导入失败', 'error');
+            return false;
+        }
+    }
+    
+    // 重置特定货币
+    resetCurrency(currencyType) {
+        if (this.currency.hasOwnProperty(currencyType)) {
+            const oldValue = this.currency[currencyType];
+            this.currency[currencyType] = 0;
+            this.saveGameData();
+            this.updateDisplay();
+            
+            Utils.showNotification(
+                `${this.getCurrencyName(currencyType)}已重置: ${oldValue} → 0`,
+                'info'
+            );
+        }
+    }
+    
+    // 模拟抽奖（用于测试）
+    simulateSpins(count = 10) {
+        let goldWins = 0;
+        
+        for (let i = 0; i < count; i++) {
+            setTimeout(() => {
+                const reward = this.calculateReward();
+                if (reward.isGold) goldWins++;
+                
+                this.addCurrency(reward.type, reward.amount);
+                this.recordSpin(reward);
+                
+                if (i === count - 1) {
+                    this.updateDisplay();
+                    Utils.showNotification(
+                        `模拟完成！${count}次抽奖中获得 ${goldWins} 次金币`,
+                        'success'
+                    );
+                }
+            }, i * 100);
+        }
+    }
+    
+    // 批量兑换
+    bulkExchange(from, to, rate, times = 1) {
+        const totalCost = rate * times;
+        
+        if (!this.hasEnoughCurrency(from, totalCost)) {
+            Utils.showNotification(`${this.getCurrencyName(from)}不足！需要 ${totalCost}`, 'error');
+            return false;
+        }
+        
+        this.deductCurrency(from, totalCost);
+        this.addCurrency(to, times);
+        
+        Utils.showNotification(
+            `批量兑换成功！${totalCost}${this.getCurrencyIcon(from)} → ${times}${this.getCurrencyIcon(to)}`,
+            'success'
+        );
+        
+        this.updateDisplay();
+        return true;
+    }
+    
+    // 获取下一次金币保底信息
+    getNextPityInfo() {
+        const spinsToPity = this.lotteryConfig.PITY_THRESHOLD - this.pityCounter;
+        const chance = this.lotteryConfig.BASE_GOLD_CHANCE * 100;
+        
+        return {
+            spinsToPity: spinsToPity,
+            currentPity: this.pityCounter,
+            pityThreshold: this.lotteryConfig.PITY_THRESHOLD,
+            baseChance: chance.toFixed(3) + '%',
+            nextSpinChance: (this.pityCounter >= this.lotteryConfig.PITY_THRESHOLD - 1) ? 
+                '100% (保底)' : ((chance / (this.lotteryConfig.PITY_THRESHOLD - this.pityCounter)).toFixed(3) + '%')
+        };
+    }
+    
+    // 格式化显示信息
+    formatCurrency(amount, currencyType) {
+        const icons = {
+            gold: '🪙',
+            diamond: '💎', 
+            luck: '🍀',
+            welfare: '🎫'
+        };
+        
+        return `${amount}${icons[currencyType] || ''}`;
+    }
+    
+    formatStats() {
+        const stats = this.getStats();
+        return `
+🎰 抽奖统计：
+• 总抽奖次数: ${stats.totalSpins}
+• 金币获得次数: ${stats.goldWins}
+• 中奖率: ${stats.winRate}
+• 当前货币:
+  - 金币: ${this.formatCurrency(stats.totalGold, 'gold')}
+  - 钻石: ${this.formatCurrency(stats.totalDiamond, 'diamond')}
+  - 幸运值: ${this.formatCurrency(stats.totalLuck, 'luck')}
+  - 福利值: ${this.formatCurrency(stats.totalWelfare, 'welfare')}
+• 保底计数: ${stats.pityCounter}/${this.lotteryConfig.PITY_THRESHOLD}
+        `.trim();
+    }
+}
+// === JS_LOTTERY_MANAGER_2 结束 ===
+// === JS_MAIN_APP 开始 ===
+// 主应用协调类
+class FengjinSimulator {
+    constructor() {
+        this.components = {};
+        this.isInitialized = false;
+        this.init();
+    }
+    
+    async init() {
+        try {
+            // 初始化组件
+            await this.initializeComponents();
+            
+            // 绑定全局事件
+            this.bindGlobalEvents();
+            
+            // 启动应用
+            this.startApplication();
+            
+            this.isInitialized = true;
+            console.log('🎮 封禁模拟器初始化完成');
+            
+        } catch (error) {
+            console.error('应用初始化失败:', error);
+            this.showErrorScreen('应用初始化失败，请刷新页面重试');
+        }
+    }
+    
+    // 组件初始化
+    async initializeComponents() {
+        // 初始化存储管理器
+        this.components.storage = new StorageManager();
+        window.storageManager = this.components.storage;
+        
+        // 初始化屏幕管理器
+        this.components.screen = new ScreenManager();
+        window.screenManager = this.components.screen;
+        
+        // 初始化认证管理器
+        this.components.auth = new AuthManager(
+            this.components.storage,
+            this.components.screen
+        );
+        window.authManager = this.components.auth;
+        
+        // 延迟初始化游戏管理器（需要DOM元素）
+        await this.initializeGameManager();
+        
+        // 初始化抽奖管理器
+        this.components.lottery = new LotteryManager(this.components.storage);
+        window.lotteryManager = this.components.lottery;
+        
+        // 保存到全局变量以便调试
+        window.app = this;
+    }
+    
+    async initializeGameManager() {
+        return new Promise((resolve) => {
+            // 等待DOM加载完成
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', () => {
+                    this.components.game = new GameManager();
+                    window.gameManager = this.components.game;
+                    resolve();
+                });
+            } else {
+                this.components.game = new GameManager();
+                window.gameManager = this.components.game;
+                resolve();
+            }
+        });
+    }
+    
+    // 全局事件绑定
+    bindGlobalEvents() {
+        // 错误处理
+        window.addEventListener('error', (e) => {
+            console.error('全局错误:', e.error);
+            this.handleError(e.error);
+        });
+        
+        window.addEventListener('unhandledrejection', (e) => {
+            console.error('未处理的Promise拒绝:', e.reason);
+            this.handleError(e.reason);
+        });
+        
+        // 页面可见性变化
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                this.onAppHide();
+            } else {
+                this.onAppShow();
+            }
+        });
+        
+        // 键盘快捷键
+        document.addEventListener('keydown', (e) => {
+            this.handleGlobalShortcuts(e);
+        });
+    }
+    
+    // 应用生命周期
+    startApplication() {
+        Utils.showNotification('封禁模拟器已启动', 'success');
+        
+        // 显示加载完成动画
+        this.showWelcomeAnimation();
+        
+        // 检查是否需要显示欢迎提示
+        this.showWelcomeTips();
+    }
+    
+    onAppHide() {
+        // 应用进入后台时保存数据
+        if (this.components.storage) {
+            this.components.storage.saveGameData();
+        }
+        
+        // 暂停游戏
+        if (this.components.game) {
+            this.components.game.pauseGame();
+        }
+    }
+    
+    onAppShow() {
+        // 应用回到前台
+        console.log('应用回到前台');
+    }
+    
+    // 错误处理
+    handleError(error) {
+        console.error('应用错误:', error);
+        
+        // 生产环境下显示友好错误提示
+        if (!this.isDevelopment()) {
+            Utils.showNotification('发生错误，部分功能可能不可用', 'error');
+        }
+    }
+    
+    showErrorScreen(message) {
+        // 显示错误界面
+        const errorHtml = `
+            <div class="error-screen">
+                <h2>❌ 应用加载失败</h2>
+                <p>${message}</p>
+                <button onclick="location.reload()" class="primary-btn">重新加载</button>
+            </div>
+        `;
+        
+        document.body.innerHTML = errorHtml;
+    }
+    
+    // 欢迎和提示系统
+    showWelcomeAnimation() {
+        // 添加欢迎动画效果
+        document.body.style.opacity = '0';
+        setTimeout(() => {
+            document.body.style.transition = 'opacity 0.5s ease';
+            document.body.style.opacity = '1';
+        }, 100);
+    }
+    
+    showWelcomeTips() {
+        const userData = this.components.storage.getUserData();
+        
+        // 首次使用提示
+        if (!userData || userData.loginCount <= 1) {
+            setTimeout(() => {
+                Utils.showNotification('💡 提示：输入"admin"可进入开发者模式', 'info', 5000);
+            }, 2000);
+        }
+    }
+    
+    // 快捷键处理
+    handleGlobalShortcuts(e) {
+        // 全局快捷键
+        if (e.ctrlKey && e.key === 's') {
+            e.preventDefault(); // 阻止保存网页
+            Utils.showNotification('数据已自动保存', 'info');
+        }
+        
+        // 开发者快捷键
+        if (e.ctrlKey && e.shiftKey && e.key === 'I') {
+            e.preventDefault();
+            this.toggleDebugInfo();
+        }
+    }
+    
+    toggleDebugInfo() {
+        // 切换调试信息显示
+        const debugElement = document.getElementById('debug-info');
+        if (!debugElement) {
+            this.showDebugInfo();
+        } else {
+            debugElement.remove();
+        }
+    }
+    
+    showDebugInfo() {
+        const debugInfo = Utils.createElement('div', 'debug-info');
+        debugInfo.id = 'debug-info';
+        debugInfo.innerHTML = `
+            <h3>🔧 调试信息</h3>
+            <pre>${JSON.stringify(this.getDebugData(), null, 2)}</pre>
+        `;
+        debugInfo.style.cssText = `
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            z-index: 10000;
+            max-width: 300px;
+            max-height: 200px;
+            overflow: auto;
+            font-size: 12px;
+        `;
+        document.body.appendChild(debugInfo);
+    }
+    
+    getDebugData() {
+        return {
+            timestamp: new Date().toISOString(),
+            user: this.components.auth?.getCurrentUser() || '未登录',
+            screen: this.components.screen?.getCurrentScreen() || '未知',
+            game: this.components.game?.getGameState() || '未初始化',
+            storage: this.components.storage?.getStats() || '无数据'
+        };
+    }
+    
+    // 工具方法
+    isDevelopment() {
+        return window.location.hostname === 'localhost' || 
+               window.location.hostname === '127.0.0.1';
+    }
+    
+    // 公共API
+    getComponent(name) {
+        return this.components[name];
+    }
+    
+    restartApplication() {
+        if (confirm('确定要重启应用吗？所有未保存的数据可能会丢失。')) {
+            location.reload();
+        }
+    }
+    
+    // 销毁应用
+    destroy() {
+        // 清理所有组件
+        Object.values(this.components).forEach(component => {
+            if (component && typeof component.destroy === 'function') {
+                component.destroy();
+            }
+        });
+        
+        // 移除全局引用
+        window.app = null;
+        window.storageManager = null;
+        window.screenManager = null;
+        window.authManager = null;
+        window.gameManager = null;
+        window.lotteryManager = null;
+    }
+}
+// === JS_MAIN_APP 结束 ===
+// === JS_INIT 开始 ===
+// 应用初始化和启动代码
+
+// CSS动画样式注入
+const appStyles = `
+    @keyframes developerPulse {
+        0% { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        50% { background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%); }
+        100% { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+    }
+    
+    @keyframes goldPop {
+        0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+        50% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
+        100% { transform: translate(-50%, -50%) scale(1); opacity: 0; }
+    }
+    
+    .notification {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 12px 20px;
+        border-radius: 8px;
+        color: white;
+        z-index: 10000;
+        max-width: 300px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        animation: slideIn 0.3s ease;
+    }
+    
+    .notification-success { background: #48bb78; }
+    .notification-error { background: #e53e3e; }
+    .notification-info { background: #4299e1; }
+    .notification-warning { background: #ed8936; }
+    
+    .developer-badge {
+        position: fixed;
+        top: 10px;
+        right: 10px;
+        background: #ff6b6b;
+        color: white;
+        padding: 5px 10px;
+        border-radius: 20px;
+        font-size: 12px;
+        z-index: 1000;
+        font-weight: bold;
+    }
+    
+    .gold-effect {
+        animation: goldPop 1s ease-out;
+    }
+    
+    @keyframes slideIn {
+        from { transform: translateX(100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+    }
+    
+    .loading-spinner {
+        width: 20px;
+        height: 20px;
+        border: 2px solid transparent;
+        border-top: 2px solid currentColor;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+`;
+
+// 注入样式
+const styleElement = document.createElement('style');
+styleElement.textContent = appStyles;
+document.head.appendChild(styleElement);
+
+// 页面加载完成后初始化应用
 document.addEventListener('DOMContentLoaded', function() {
-    // 初始化主应用
-    window.app = new FengjinSimulator();
+    console.log('🚀 封禁模拟器启动中...');
     
-    // 页面加载动画
-    document.body.style.opacity = '0';
+    // 显示加载状态
+    const loadingState = Utils.showNotification('应用加载中...', 'info', 0);
+    
+    // 延迟初始化以确保所有DOM元素就绪
     setTimeout(() => {
-        document.body.style.transition = 'opacity 0.5s ease';
-        document.body.style.opacity = '1';
+        try {
+            // 创建主应用实例
+            window.fengjinApp = new FengjinSimulator();
+            
+            // 移除加载通知
+            if (loadingState && loadingState.remove) {
+                loadingState.remove();
+            }
+            
+            console.log('✅ 封禁模拟器启动完成');
+            
+        } catch (error) {
+            console.error('❌ 应用启动失败:', error);
+            
+            // 显示错误界面
+            document.body.innerHTML = `
+                <div style="
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    height: 100vh;
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    color: white;
+                    text-align: center;
+                    padding: 20px;
+                ">
+                    <div>
+                        <h1>❌ 应用加载失败</h1>
+                        <p>抱歉，应用启动时遇到错误。</p>
+                        <p style="font-size: 14px; opacity: 0.8;">${error.message}</p>
+                        <button onclick="location.reload()" style="
+                            background: white;
+                            color: #667eea;
+                            border: none;
+                            padding: 10px 20px;
+                            border-radius: 5px;
+                            margin-top: 20px;
+                            cursor: pointer;
+                        ">重新加载页面</button>
+                    </div>
+                </div>
+            `;
+        }
     }, 100);
-    
-    console.log('🚀 封禁模拟器已启动！');
 });
 
-// 工具函数
-function formatTime(seconds) {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-}
+// 全局错误处理
+window.addEventListener('error', (e) => {
+    console.error('全局错误:', e.error);
+});
+
+window.addEventListener('unhandledrejection', (e) => {
+    console.error('未处理的Promise拒绝:', e.reason);
+});
+
+// 导出到全局作用域（用于调试）
+window.Utils = Utils;
+window.CONFIG = CONFIG;
+
+console.log('📦 封禁模拟器模块加载完成');
+// === JS_INIT 结束 ===
