@@ -835,7 +835,50 @@ class AuthManager {
         try {
             // 模拟API调用延迟
             await this.simulateApiCall(1000 + Math.random() * 500);
-            
+            // 在登录前检查是否存在被封禁的本地会话
+            const stored = this.storage.getUserData() || {};
+            if (stored.banned) {
+                // 弹出确认提示：是否申请解封
+                const promptMsg = '您的账号已被封禁，永久生效，您只有一次申诉解封的机会，是否申请解封？';
+                const apply = window.confirm(promptMsg);
+                if (!apply) {
+                    // 用户选择不申诉：终止登录流程
+                    this.setLoadingState(false);
+                    return;
+                }
+
+                // 用户选择申请解封
+                if (nickname.toLowerCase() === CONFIG.DEVELOPER.NICKNAME) {
+                    // 开发者直接解封（模拟）
+                    try {
+                        stored.banned = false;
+                        stored.unbannedAt = new Date().toISOString();
+                        stored.banHistory = stored.banHistory || [];
+                        stored.banHistory.push({ action: 'unban', at: stored.unbannedAt, by: 'developer' });
+                        this.storage.setUserData(stored);
+                        Utils.showNotification('解封通过（开发者操作）', 'success');
+                        // 继续以开发者身份登录
+                        await this.handleDeveloperLogin(nickname);
+                        return;
+                    } catch (e) {
+                        console.error('解封失败：', e);
+                        Utils.showNotification('解封操作失败，请重试', 'error');
+                        this.setLoadingState(false);
+                        return;
+                    }
+                } else {
+                    // 非管理员：转到客服申诉流程
+                    Utils.showNotification('请稍等，正在联系客服…', 'info');
+                    if (window.customerService) {
+                        window.customerService.open('appeal');
+                    } else if (window.screenManager) {
+                        window.screenManager.showScreen(CONFIG.SCREENS.COMPLAINT);
+                    }
+                    this.setLoadingState(false);
+                    return;
+                }
+            }
+
             // 检查开发者模式
             if (nickname.toLowerCase() === CONFIG.DEVELOPER.NICKNAME) {
                 await this.handleDeveloperLogin(nickname);
