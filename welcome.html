@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>欢迎 - BanSimulator</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .welcome-container{max-width:900px;margin:60px auto;color:white;padding:20px}
+        .welcome-actions{margin-top:20px}
+    </style>
+</head>
+<body>
+    <div class="welcome-container">
+        <h1>欢迎回来</h1>
+        <p>账号: <strong id="welcome-nickname">用户</strong></p>
+        <div class="welcome-actions">
+            <button id="enter-app" class="primary-btn">进入应用</button>
+            <button id="logout-btn" class="secondary-btn">退出登录</button>
+        </div>
+        <div style="margin-top:18px">
+            <a href="index.html">← 返回登录页面</a>
+        </div>
+    </div>
+
+    <script>
+        // Fill nickname from localStorage
+        try {
+            const data = JSON.parse(localStorage.getItem('fengjin_user_data') || '{}');
+            const nick = data.nickname || '用户';
+            document.getElementById('welcome-nickname').textContent = nick;
+        } catch (e) {
+            console.warn('无法读取本地用户数据', e);
+        }
+
+        document.getElementById('enter-app').addEventListener('click', () => {
+            // Return to main app (index.html) which will restore session
+            window.location.href = 'index.html';
+        });
+
+        document.getElementById('logout-btn').addEventListener('click', () => {
+            localStorage.removeItem('fengjin_user_data');
+            window.location.href = 'index.html';
+        });
+    </script>
+</body>
+</html>

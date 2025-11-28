@@ -794,6 +794,29 @@ class AuthManager {
                 this.handleLogin();
             });
         }
+
+        // 登录页的申请解封按钮（若本地检测到被封用户则显示）
+        const applyBtn = document.getElementById('apply-unban-btn');
+        if (applyBtn) {
+            try { if (applyBtn.__click) applyBtn.removeEventListener('click', applyBtn.__click); } catch(e){}
+            applyBtn.__click = () => {
+                const stored = this.storage.getUserData() || {};
+                const nick = (stored.nickname || '').toLowerCase();
+                if (nick === CONFIG.DEVELOPER.NICKNAME) {
+                    // admin直接解封
+                    stored.banned = false;
+                    stored.unbannedAt = new Date().toISOString();
+                    stored.banHistory = stored.banHistory || [];
+                    stored.banHistory.push({ action: 'unban', at: stored.unbannedAt, by: 'developer' });
+                    this.storage.setUserData(stored);
+                    Utils.showNotification('解封通过（开发者操作）', 'success');
+                } else {
+                    // 非 admin 跳转到解封抽取页面
+                    window.location.href = 'unban_lottery.html';
+                }
+            };
+            applyBtn.addEventListener('click', applyBtn.__click);
+        }
         
         // 注：已移除“切换账号”按钮，游戏仅允许单账号登录
     }
@@ -929,8 +952,8 @@ class AuthManager {
             return;
         }
 
-        // 跳转到主菜单
-        this.screens.showScreen(this.screens.screens.MENU);
+        // 跳转到独立的欢迎页（独立于登录页，通过跳转而非页面内切换）
+        window.location.href = 'welcome.html';
     }
     
     // 开发者模式登录
@@ -962,8 +985,8 @@ class AuthManager {
         // 初始化开发者工具
         this.initDeveloperTools();
         
-        // 跳转到主菜单
-        this.screens.showScreen(this.screens.screens.MENU);
+        // 跳转到独立的欢迎页
+        window.location.href = 'welcome.html';
     }
     
     // 登录UI效果
@@ -1061,11 +1084,11 @@ class AuthManager {
             return;
         }
 
-        // 如果是开发者账号或未封禁普通账号，恢复会话并跳转到菜单
+        // 如果是开发者账号或未封禁普通账号，恢复会话并跳转到独立的欢迎页（通过跳转回到 index.html 可恢复 SPA）
         this.currentUser = userData;
         this.isDeveloperMode = userData.isDeveloper || (userData.nickname && userData.nickname.toLowerCase() === CONFIG.DEVELOPER.NICKNAME);
         Utils.showNotification(`恢复会话：${userData.nickname}`, 'info');
-        this.screens.showScreen(this.screens.screens.MENU);
+        window.location.href = 'welcome.html';
     }
     
     // 登出处理
