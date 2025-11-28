@@ -2225,25 +2225,33 @@ class FengjinSimulator {
         // 初始化存储管理器
         this.components.storage = new StorageManager();
         window.storageManager = this.components.storage;
-        
+
         // 初始化屏幕管理器
         this.components.screen = new ScreenManager();
         window.screenManager = this.components.screen;
-        
+
         // 初始化认证管理器
         this.components.auth = new AuthManager(
             this.components.storage,
             this.components.screen
         );
         window.authManager = this.components.auth;
-        
+
+        // 初始化客服管理器
+        this.components.customerService = new CustomerService(
+            this.components.storage,
+            this.components.screen,
+            this.components.auth
+        );
+        window.customerService = this.components.customerService;
+
         // 延迟初始化游戏管理器（需要DOM元素）
         await this.initializeGameManager();
-        
+
         // 初始化抽奖管理器
         this.components.lottery = new LotteryManager(this.components.storage);
         window.lotteryManager = this.components.lottery;
-        
+
         // 保存到全局变量以便调试
         window.app = this;
     }

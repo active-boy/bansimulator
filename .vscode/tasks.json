@@ -1,0 +1,12 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "git add, commit, push for customer service bugfix",
+			"type": "shell",
+			"command": "git add .; git commit -m \"fix(customer): ensure customer service and back buttons work by initializing CustomerService at startup\"; git push",
+			"isBackground": false,
+			"problemMatcher": []
+		}
+	]
+}
