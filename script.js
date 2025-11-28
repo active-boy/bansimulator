@@ -2600,6 +2600,8 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 绑定投诉按钮事件
     bindComplaintEvents();
+    // 绑定其它常用按钮（再玩一次、返回菜单、发帖等）
+    if (typeof bindMiscUI === 'function') bindMiscUI();
 });
 
 // 绑定投诉按钮事件
@@ -2614,6 +2616,44 @@ function bindComplaintEvents() {
             }
         };
     }
+}
+
+// 绑定其他常用UI按钮，确保它们有响应
+function bindMiscUI() {
+    // 再玩一次（重新开始游戏）
+    const complainNo = document.getElementById('complain-no');
+    if (complainNo) {
+        complainNo.onclick = () => {
+            if (window.gameManager) {
+                window.gameManager.resetGame();
+                if (window.screenManager) window.screenManager.showScreen(CONFIG.SCREENS.GAME);
+            } else if (window.screenManager) {
+                window.screenManager.showScreen(CONFIG.SCREENS.GAME);
+            }
+        };
+    }
+
+    // 主界面返回菜单
+    const backMain = document.getElementById('back-to-menu-main');
+    if (backMain) backMain.addEventListener('click', () => { if (window.screenManager) window.screenManager.showScreen(CONFIG.SCREENS.MENU); });
+
+    // 设置页返回
+    const backSettings = document.getElementById('back-to-menu-settings');
+    if (backSettings) backSettings.addEventListener('click', () => { if (window.screenManager) window.screenManager.showScreen(CONFIG.SCREENS.MENU); });
+
+    // 发帖 / 评论 / 分享：简单模拟动作
+    const postBtn = document.getElementById('action-post');
+    if (postBtn) postBtn.addEventListener('click', () => { Utils.showNotification('已发布内容（模拟）', 'success'); });
+
+    const commentBtn = document.getElementById('action-comment');
+    if (commentBtn) commentBtn.addEventListener('click', () => { Utils.showNotification('已发布评论（模拟）', 'success'); });
+
+    const shareBtn = document.getElementById('action-share');
+    if (shareBtn) shareBtn.addEventListener('click', () => { Utils.showNotification('已分享内容（模拟）', 'success'); });
+
+    // 设置页开发者工具按钮：展示调试信息
+    const devBtn = document.getElementById('dev-tools-btn');
+    if (devBtn) devBtn.addEventListener('click', () => { if (window.app) window.app.toggleDebugInfo(); else Utils.showNotification('开发者面板不可用', 'info'); });
 }
 
 // 全局错误处理
