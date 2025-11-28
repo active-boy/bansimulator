@@ -2759,15 +2759,46 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // 绑定投诉按钮事件
 function bindComplaintEvents() {
-    const yesBtn = document.getElementById('complain-yes');
-    if (yesBtn) {
-        yesBtn.onclick = () => {
-            if (window.customerService) {
-                window.customerService.open('complaint');
-            } else if (window.screenManager) {
-                window.screenManager.showScreen('customer-screen');
+    // 使用事件委托以确保按钮在动态添加或页面切换后仍能响应
+    if (!document.__complaintDelegated) {
+        document.__complaintDelegated = (e) => {
+            const t = e.target;
+            if (!t) return;
+
+            // 支持直接点击按钮或点击其子元素
+            if (t.id === 'complain-yes' || (t.closest && t.closest('#complain-yes'))) {
+                e.preventDefault();
+                if (window.customerService && typeof window.customerService.open === 'function') {
+                    window.customerService.open('complaint');
+                } else if (window.screenManager) {
+                    // 首先切换到客服屏幕，如果客服模块可用则让其打开具体话题
+                    window.screenManager.showScreen(CONFIG.SCREENS.CUSTOMER || 'customer-screen');
+                    setTimeout(() => { if (window.customerService) window.customerService.open('complaint'); }, 50);
+                } else {
+                    // 最后兜底：跳转到独立的 AI 客服页面
+                    window.location.href = 'ai_customer.html';
+                }
             }
         };
+        document.addEventListener('click', document.__complaintDelegated);
+    }
+
+    // 同时对元素进行直接绑定（如果已存在），以便更快响应
+    const yesBtn = document.getElementById('complain-yes');
+    if (yesBtn) {
+        try { if (yesBtn.__clickHandler) yesBtn.removeEventListener('click', yesBtn.__clickHandler); } catch(e){}
+        yesBtn.__clickHandler = (e) => {
+            e.preventDefault();
+            if (window.customerService && typeof window.customerService.open === 'function') {
+                window.customerService.open('complaint');
+            } else if (window.screenManager) {
+                window.screenManager.showScreen(CONFIG.SCREENS.CUSTOMER || 'customer-screen');
+                setTimeout(() => { if (window.customerService) window.customerService.open('complaint'); }, 50);
+            } else {
+                window.location.href = 'ai_customer.html';
+            }
+        };
+        yesBtn.addEventListener('click', yesBtn.__clickHandler);
     }
 }
 

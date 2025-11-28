@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BanSimulator - App</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .app-header{display:flex;justify-content:space-between;align-items:center;padding:12px 20px}
+    </style>
+</head>
+<body>
+    <div class="app-header">
+        <h1>BanSimulator</h1>
+        <div>
+            <button id="menu-settings-btn-header" class="secondary-btn">⚙️ 设置</button>
+            <button id="open-customer" class="secondary-btn">联系客服</button>
+        </div>
+    </div>
+
+    <!-- 包含主菜单和各个屏幕（来自原 index.html 的相关部分） -->
+    <div id="menu-screen" class="screen active">
+        <div class="menu-container">
+            <div class="user-welcome">
+                <h2>欢迎, <span id="menu-username">用户</span></h2>
+                <div class="user-badge" id="developer-badge" style="display: none;">🔧 开发者模式</div>
+            </div>
+            <div class="menu-options">
+                <div class="menu-card" data-target="game-screen">
+                    <div class="menu-icon">🎮</div>
+                    <h3>贪吃蛇游戏</h3>
+                    <p>体验小游戏后的审核机制</p>
+                </div>
+                <div class="menu-card" data-target="invite-screen">
+                    <div class="menu-icon">🎁</div>
+                    <h3>邀请好友抽取解封机会</h3>
+                    <p>参与抽取获得解封机会</p>
+                    <div class="menu-badge">新活动</div>
+                </div>
+            </div>
+            <div style="position:relative;">
+                <button id="menu-settings-btn" title="系统设置" style="position:absolute;right:8px;top:8px;" class="secondary-btn">⚙️</button>
+            </div>
+            <div class="menu-footer">
+                <div class="share-note" style="margin-top:12px;font-size:0.85em;opacity:0.9;color:#fff;">请分享网址给好友 https://active-boy.github.io/bansimulator/</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Game Screen -->
+    <div id="game-screen" class="screen">
+        <div class="game-container">
+            <div class="game-header">
+                <h2>🎮 贪吃蛇小游戏</h2>
+                <div class="player-info">玩家: <span id="player-name">游客</span></div>
+            </div>
+            <div class="game-stats">
+                <div class="stat-item">
+                    <span class="stat-label">分数</span>
+                    <span id="score" class="stat-value">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">长度</span>
+                    <span id="snake-length" class="stat-value">3</span>
+                </div>
+                <div style="margin-top:8px;">
+                    <button id="start-game-btn" class="primary-btn">▶️ 开始游戏</button>
+                </div>
+            </div>
+            <div class="game-area">
+                <canvas id="snake-canvas" width="400" height="400"></canvas>
+            </div>
+            <div class="game-controls">
+                <div class="controls-info">
+                    <p>🎮 使用方向键 ↑↓←→ 控制蛇的移动</p>
+                </div>
+                <button id="pause-btn" class="control-btn">⏸️ 暂停</button>
+                <button id="exit-btn" class="control-btn secondary-btn">← 返回菜单</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Invite / Lottery -->
+    <div id="invite-screen" class="screen">
+        <div class="invite-container">
+            <div class="invite-header">
+                <h2>🎁 邀请好友抽取解封机会</h2>
+                <p>参与抽取获得解封机会</p>
+            </div>
+            <div class="currency-display">
+                <div class="currency-item">
+                    <span class="currency-icon">🪙</span>
+                    <span class="currency-amount" id="gold-amount">0</span>
+                    <span class="currency-name">金币</span>
+                </div>
+                <div class="currency-item">
+                    <span class="currency-icon">💎</span>
+                    <span class="currency-amount" id="diamond-amount">0</span>
+                    <span class="currency-name">钻石</span>
+                </div>
+                <div class="currency-item">
+                    <span class="currency-icon">🍀</span>
+                    <span class="currency-amount" id="luck-amount">0</span>
+                    <span class="currency-name">幸运值</span>
+                </div>
+            </div>
+            <div class="lottery-section">
+                <div class="lottery-wheel" id="lottery-wheel">
+                    <div class="wheel-center"><div class="wheel-pointer">🎯</div></div>
+                    <div class="wheel-items">
+                        <div class="wheel-item" data-value="9">9💎</div>
+                        <div class="wheel-item" data-value="9">9💎</div>
+                        <div class="wheel-item" data-value="9">9💎</div>
+                        <div class="wheel-item" data-value="1">1🪙</div>
+                    </div>
+                </div>
+                <div class="lottery-controls">
+                    <button id="spin-button" class="spin-btn"><span class="spin-text">抽奖一次</span><span class="spin-cost">消耗: 1🪙</span></button>
+                    <div class="spin-info">
+                        <div class="chance-display">中奖概率: <span id="gold-chance">0.1%</span></div>
+                        <div class="pity-counter">保底计数: <span id="pity-count">0</span>/100</div>
+                    </div>
+                </div>
+            </div>
+            <div class="invite-footer"><button id="back-to-menu" class="secondary-btn">← 返回菜单</button></div>
+        </div>
+    </div>
+
+    <!-- Complaint Screen -->
+    <div id="complaint-screen" class="screen">
+        <div class="complaint-container">
+            <div class="result-header"><h2>🎯 游戏结束！</h2><div class="final-score">最终得分: <span id="final-score">0</span> 分</div></div>
+            <div class="complaint-question">
+                <p>是否投诉游戏《贪吃蛇大冒险》运行不稳定？</p>
+                <div class="complaint-options">
+                    <button id="complain-yes" class="complaint-btn primary-btn">✅ 是的，我要投诉</button>
+                    <button id="complain-no" class="complaint-btn secondary-btn">🔄 不，再玩一次</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Banned Screen -->
+    <div id="banned-screen" class="screen">
+        <div class="banned-container">
+            <div class="banned-header"><h2>⛔ 账号已被封禁</h2><div class="user-welcome">账号: <strong id="banned-nickname">用户</strong></div></div>
+            <div class="banned-info"><p>封禁原因: <span id="banned-reason">未记录</span></p><p>封禁时间: <span id="banned-at">-</span></p></div>
+            <div class="banned-actions"><button id="banned-contact" class="primary-btn">联系客服</button><button id="banned-appeal" class="secondary-btn">提交申诉</button><button id="banned-back-login" class="secondary-btn">← 返回登录</button><button id="banned-unban-btn" class="primary-btn" style="display:none;margin-left:8px;">🔓 开发者解封</button></div>
+            <div class="banned-history"><h3>封禁历史</h3><div id="banned-history-list"><div class="no-records">暂无记录</div></div></div>
+        </div>
+    </div>
+
+    <!-- Customer Screen -->
+    <div id="customer-screen" class="screen">
+        <div class="customer-container">
+            <div class="customer-header"><button id="customer-back" class="secondary-btn">← 返回主界面</button><h2>🧾 人工客服</h2></div>
+            <div id="customer-chat" class="customer-chat"><div class="chat-messages" id="chat-messages"></div></div>
+            <div class="customer-quick"><button class="quick-btn" data-topic="appeal">申诉解封</button><button class="quick-btn" data-topic="query">违规查询</button><button class="quick-btn" data-topic="complaint">投诉游戏</button></div>
+            <div class="customer-input"><input id="customer-input" type="text" placeholder="输入消息给客服（示例：为什么我被封号？）"><button id="customer-send" class="primary-btn">发送</button></div>
+        </div>
+    </div>
+
+    <!-- Settings Screen -->
+    <div id="settings-screen" class="screen">
+        <div class="settings-container"><h2>⚙️ 系统设置</h2><div class="settings-options"><div class="setting-item"><label>音效设置</label><input type="range" min="0" max="100" value="50" class="volume-slider"></div><div class="setting-item"><label>动画效果</label><input type="checkbox" checked class="toggle-switch"></div><div class="setting-item"><label>开发者工具</label><button id="dev-tools-btn" class="secondary-btn">打开控制台</button></div></div><button id="back-to-menu-settings" class="secondary-btn">← 返回菜单</button></div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
