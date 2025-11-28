@@ -6,8 +6,10 @@
     <title>欢迎 - BanSimulator</title>
     <link rel="stylesheet" href="style.css">
     <style>
-        .welcome-container{max-width:900px;margin:60px auto;color:white;padding:20px}
+        /* 更改为深色文本以提高可读性，移除强调的白色 */
+        .welcome-container{max-width:900px;margin:60px auto;color:#222;padding:20px;background:rgba(255,255,255,0.9);border-radius:8px}
         .welcome-actions{margin-top:20px}
+        .welcome-note{margin-top:12px;color:#555}
     </style>
 </head>
 <body>
@@ -15,7 +17,7 @@
         <h1>欢迎回来</h1>
         <p>账号: <strong id="welcome-nickname">用户</strong></p>
         <div class="welcome-actions">
-            <button id="enter-app" class="primary-btn">进入应用</button>
+            <!-- 取消“进入应用”按钮：应用应该直接展示 -->
             <button id="logout-btn" class="secondary-btn">退出登录</button>
         </div>
         <div style="margin-top:18px">
@@ -33,11 +35,7 @@
             console.warn('无法读取本地用户数据', e);
         }
 
-        document.getElementById('enter-app').addEventListener('click', () => {
-            // Return to main app (index.html) which will restore session
-            window.location.href = 'index.html';
-        });
-
+        // 仅绑定退出按钮
         document.getElementById('logout-btn').addEventListener('click', () => {
             localStorage.removeItem('fengjin_user_data');
             window.location.href = 'index.html';

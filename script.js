@@ -952,8 +952,10 @@ class AuthManager {
             return;
         }
 
-        // 跳转到独立的欢迎页（独立于登录页，通过跳转而非页面内切换）
-        window.location.href = 'welcome.html';
+        // 直接进入主菜单（不经过 welcome 页面）
+        if (this.screens && this.screens.showScreen) {
+            this.screens.showScreen(this.screens.screens.MENU);
+        }
     }
     
     // 开发者模式登录
@@ -986,7 +988,9 @@ class AuthManager {
         this.initDeveloperTools();
         
         // 跳转到独立的欢迎页
-        window.location.href = 'welcome.html';
+        if (this.screens && this.screens.showScreen) {
+            this.screens.showScreen(this.screens.screens.MENU);
+        }
     }
     
     // 登录UI效果
@@ -1088,7 +1092,11 @@ class AuthManager {
         this.currentUser = userData;
         this.isDeveloperMode = userData.isDeveloper || (userData.nickname && userData.nickname.toLowerCase() === CONFIG.DEVELOPER.NICKNAME);
         Utils.showNotification(`恢复会话：${userData.nickname}`, 'info');
-        window.location.href = 'welcome.html';
+        // 不进行自动导航：默认页面应为登录页，用户可在登录后进入应用
+        // 但我们可以预填昵称方便快速登录
+        if (input) {
+            input.value = userData.nickname || '';
+        }
     }
     
     // 登出处理
