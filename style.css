@@ -1,14 +1,413 @@
-﻿/* 基础样式 */
-body {
-    font-family: 'Microsoft YaHei', sans-serif;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+﻿/* 基础重置与变量定义 */
+* {
     margin: 0;
-    padding: 20px;
-    color: white;
-    min-height: 100vh;
+    padding: 0;
+    box-sizing: border-box;
 }
 
-h1 {
+:root {
+    --primary-color: #667eea;
+    --secondary-color: #764ba2;
+    --success-color: #48bb78;
+    --warning-color: #ed8936;
+    --danger-color: #f56565;
+    --text-color: #2d3748;
+    --text-light: #718096;
+    --bg-color: #f7fafc;
+    --card-bg: #ffffff;
+    --shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    --radius: 12px;
+}
+
+body {
+    font-family: 'Microsoft YaHei', 'Segoe UI', sans-serif;
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+    min-height: 100vh;
+    color: var(--text-color);
+    line-height: 1.6;
+}
+
+/* 屏幕管理 */
+.screen {
+    display: none;
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.screen.active {
+    display: block;
+}
+
+/* 登录界面样式 */
+#login-screen {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.login-container {
+    background: var(--card-bg);
+    padding: 50px 40px;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    max-width: 480px;
+    width: 100%;
     text-align: center;
-    margin-top: 50px;
+}
+
+.logo h1 {
+    font-size: 2.5em;
+    margin-bottom: 10px;
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.subtitle {
+    color: var(--text-light);
+    margin-bottom: 40px;
+    font-size: 1.1em;
+}
+
+.input-section {
+    margin-bottom: 30px;
+}
+
+.input-group {
+    margin-bottom: 25px;
+    text-align: left;
+}
+
+.input-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+#nickname-input {
+    width: 100%;
+    padding: 15px 20px;
+    border: 2px solid #e2e8f0;
+    border-radius: var(--radius);
+    font-size: 16px;
+    transition: all 0.3s ease;
+    background: var(--bg-color);
+}
+
+#nickname-input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    transform: translateY(-2px);
+}
+
+.error-message {
+    color: var(--danger-color);
+    font-size: 14px;
+    margin-top: 8px;
+    min-height: 20px;
+    font-weight: 500;
+}
+
+.primary-btn {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    color: white;
+    border: none;
+    padding: 15px 30px;
+    border-radius: var(--radius);
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    width: 100%;
+    position: relative;
+    overflow: hidden;
+}
+
+.primary-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+}
+
+.primary-btn:disabled {
+    background: #cbd5e0;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.loading-spinner {
+    width: 20px;
+    height: 20px;
+    border: 2px solid transparent;
+    border-top: 2px solid white;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.feature-list {
+    margin: 30px 0;
+}
+
+.feature-item {
+    padding: 8px 0;
+    color: var(--text-light);
+}
+
+.disclaimer {
+    color: #a0aec0;
+    font-size: 0.9em;
+    line-height: 1.5;
+    border-top: 1px solid #e2e8f0;
+    padding-top: 20px;
+}
+
+/* 游戏界面样式 */
+#game-screen {
+    background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
+    color: white;
+}
+
+.game-header {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.game-header h2 {
+    font-size: 2em;
+    margin-bottom: 10px;
+}
+
+.player-info {
+    color: #a0aec0;
+}
+
+.game-stats {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    margin-bottom: 20px;
+}
+
+.stat-item {
+    text-align: center;
+}
+
+.stat-label {
+    display: block;
+    font-size: 0.9em;
+    color: #a0aec0;
+    margin-bottom: 5px;
+}
+
+.stat-value {
+    font-size: 1.5em;
+    font-weight: bold;
+    color: var(--success-color);
+}
+
+.game-area {
+    display: flex;
+    justify-content: center;
+    margin: 20px 0;
+}
+
+#snake-canvas {
+    border: 3px solid var(--primary-color);
+    border-radius: var(--radius);
+    background: #2d3748;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.game-controls {
+    text-align: center;
+}
+
+.controls-info {
+    margin-bottom: 15px;
+    color: #a0aec0;
+}
+
+.control-btn {
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: var(--radius);
+    cursor: pointer;
+    font-size: 14px;
+}
+
+/* 投诉界面样式 */
+#complaint-screen {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #ed8936 0%, #ed64a6 100%);
+}
+
+.complaint-container {
+    background: var(--card-bg);
+    padding: 40px;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    max-width: 500px;
+    width: 100%;
+    text-align: center;
+}
+
+.result-header h2 {
+    margin-bottom: 10px;
+    color: var(--text-color);
+}
+
+.final-score {
+    font-size: 1.2em;
+    color: var(--primary-color);
+    margin-bottom: 30px;
+}
+
+.complaint-options {
+    display: flex;
+    gap: 15px;
+    margin: 30px 0;
+}
+
+.complaint-btn {
+    flex: 1;
+    padding: 15px;
+}
+
+.secondary-btn {
+    background: #e2e8f0;
+    color: var(--text-color);
+}
+
+.secondary-btn:hover {
+    background: #cbd5e0;
+}
+
+/* 封禁主界面样式 */
+#main-screen {
+    background: var(--bg-color);
+    padding: 20px;
+}
+
+.ban-container {
+    max-width: 800px;
+    margin: 0 auto;
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 30px;
+}
+
+.ban-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid #e2e8f0;
+}
+
+.ban-status {
+    margin-bottom: 30px;
+}
+
+.status-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 15px;
+    background: #f0fff4;
+    border-radius: var(--radius);
+    margin-bottom: 15px;
+}
+
+.status-item.warning {
+    background: #fffaf0;
+}
+
+.violation-counter {
+    text-align: center;
+    font-size: 1.1em;
+}
+
+.action-buttons {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 15px;
+    margin: 30px 0;
+}
+
+.action-btn {
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 15px;
+    border-radius: var(--radius);
+    cursor: pointer;
+    font-size: 16px;
+    transition: all 0.3s ease;
+}
+
+.action-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+}
+
+.ban-history {
+    margin-top: 30px;
+}
+
+.ban-list {
+    margin-top: 15px;
+}
+
+.no-records {
+    text-align: center;
+    color: var(--text-light);
+    font-style: italic;
+    padding: 20px;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .screen {
+        padding: 10px;
+    }
+    
+    .login-container {
+        padding: 30px 20px;
+        margin: 10px;
+    }
+    
+    .complaint-options {
+        flex-direction: column;
+    }
+    
+    .action-buttons {
+        grid-template-columns: 1fr;
+    }
+    
+    .ban-header {
+        flex-direction: column;
+        gap: 15px;
+        text-align: center;
+    }
+    
+    #snake-canvas {
+        width: 100%;
+        height: auto;
+        max-width: 400px;
+    }
 }
