@@ -579,6 +579,14 @@ class ScreenManager {
             settingsBtn.__click = () => { this.showScreen(this.screens.SETTINGS); };
             settingsBtn.addEventListener('click', settingsBtn.__click);
         }
+
+        // 兼容 app.html 中可能存在的 header 设置按钮 id
+        const settingsHeader = document.getElementById('menu-settings-btn-header');
+        if (settingsHeader) {
+            try { if (settingsHeader.__click) settingsHeader.removeEventListener('click', settingsHeader.__click); } catch(e){}
+            settingsHeader.__click = () => { this.showScreen(this.screens.SETTINGS); };
+            settingsHeader.addEventListener('click', settingsHeader.__click);
+        }
     }
     
     // 新增方法：绑定菜单卡片事件
