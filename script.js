@@ -960,15 +960,6 @@ class AuthManager {
             return;
         }
 
-        // 在用户登录后再初始化游戏管理器（延迟初始化）
-        try {
-            if (window.app && typeof window.app.initializeGameManager === 'function') {
-                await window.app.initializeGameManager();
-            }
-        } catch (e) {
-            console.warn('初始化游戏管理器时发生错误：', e);
-        }
-
         // 直接进入主菜单（不经过 welcome 页面）
         if (this.screens && this.screens.showScreen) {
             this.screens.showScreen(this.screens.screens.MENU);
@@ -1313,22 +1304,11 @@ class AuthManager {
 class GameManager {
     constructor(canvasId = 'snake-canvas') {
         this.canvas = document.getElementById(canvasId);
-        if (!this.canvas) {
-            console.warn('GameManager: canvas not found, game disabled');
-            this.canvas = null;
-            this.ctx = null;
-            this.disabled = true;
-            // Still set minimal properties to avoid undefined errors
-            this.gridSize = 20;
-            this.tileCount = 20;
-            this.resetGame();
-            return;
-        }
-        this.ctx = this.canvas.getContext('2d');
-        this.disabled = false;
+        this.ctx = this.canvas ? this.canvas.getContext('2d') : null;
         this.gridSize = 20;
-        this.tileCount = this.canvas.width / this.gridSize;
-        
+        // 如果 canvas 存在，则根据宽度计算格子数，否则使用默认值
+        this.tileCount = this.canvas ? Math.floor(this.canvas.width / this.gridSize) : 20;
+
         this.resetGame();
         this.bindControls();
         this.gameLoop = this.gameLoop.bind(this);
@@ -1482,8 +1462,8 @@ class GameManager {
     }
 
     startGame() {
-        if (this.disabled) {
-            console.warn('GameManager: startGame called but game is disabled (no canvas)');
+        if (!this.ctx) {
+            console.warn('GameManager: startGame called but no canvas/context available');
             return;
         }
         if (this.isRunning) return;
@@ -1524,7 +1504,7 @@ class GameManager {
     }
 
     update() {
-        if (this.disabled) return;
+        if (!this.ctx) return;
         if (this.dx === 0 && this.dy === 0) return;
 
         // 移动蛇头
@@ -1566,7 +1546,7 @@ class GameManager {
     }
 
     draw() {
-        if (this.disabled || !this.ctx) return;
+        if (!this.ctx) return;
 
         // 清空画布
         this.ctx.fillStyle = '#1a202c';
@@ -2449,7 +2429,8 @@ class FengjinSimulator {
         );
         window.customerService = this.components.customerService;
 
-        // 游戏管理器将在用户登录后初始化（避免在未登录时占用资源/状态）
+        // 初始化游戏管理器（需要DOM元素）
+        await this.initializeGameManager();
 
         // 初始化抽奖管理器
         this.components.lottery = new LotteryManager(this.components.storage);
@@ -2460,20 +2441,14 @@ class FengjinSimulator {
     }
     
     async initializeGameManager() {
-        return new Promise((resolve) => {
-            // 等待DOM加载完成
-            if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', () => {
-                    this.components.game = new GameManager();
-                    window.gameManager = this.components.game;
-                    resolve();
-                });
-            } else {
-                this.components.game = new GameManager();
-                window.gameManager = this.components.game;
-                resolve();
-            }
-        });
+        // 同步初始化游戏管理器，保持与原始逻辑一致
+        try {
+            this.components.game = new GameManager();
+            window.gameManager = this.components.game;
+        } catch (e) {
+            console.error('初始化 GameManager 时出错：', e);
+        }
+        return Promise.resolve();
     }
     
     // 全局事件绑定
@@ -2818,21 +2793,11 @@ function bindComplaintEvents() {
             // 支持直接点击按钮或点击其子元素
             if (t.id === 'complain-yes' || (t.closest && t.closest('#complain-yes'))) {
                 e.preventDefault();
-                // 改为记录投诉并提示“已投诉”，不跳转到其他页面
-                Utils.showNotification('已投诉', 'success');
-                try {
-                    const user = (window.storageManager && window.storageManager.getUserData()) || {};
-                    const tickets = user.supportTickets || [];
-                    const ticket = { id: `T${Date.now()}`, content: '用户在游戏结束处提交投诉', status: 'submitted', at: new Date().toISOString() };
-                    tickets.push(ticket);
-                    user.supportTickets = tickets;
-                    if (window.storageManager) window.storageManager.setUserData(user);
-                    // 如果有客服对象，也让其记录工单
-                    if (window.customerService && typeof window.customerService.createTicket === 'function') {
-                        window.customerService.createTicket('用户在游戏结束处提交投诉');
-                    }
-                } catch (err) {
-                    console.warn('记录投诉失败：', err);
+                // 恢复到原始行为：跳转到客服/投诉页面以便进一步处理
+                if (window.customerService) {
+                    window.customerService.open('complaint');
+                } else if (window.screenManager) {
+                    window.screenManager.showScreen(CONFIG.SCREENS.COMPLAINT);
                 }
             }
         };
@@ -2845,19 +2810,10 @@ function bindComplaintEvents() {
         try { if (yesBtn.__clickHandler) yesBtn.removeEventListener('click', yesBtn.__clickHandler); } catch(e){}
         yesBtn.__clickHandler = (e) => {
             e.preventDefault();
-            Utils.showNotification('已投诉', 'success');
-            try {
-                const user = (window.storageManager && window.storageManager.getUserData()) || {};
-                const tickets = user.supportTickets || [];
-                const ticket = { id: `T${Date.now()}`, content: '用户在游戏结束处提交投诉', status: 'submitted', at: new Date().toISOString() };
-                tickets.push(ticket);
-                user.supportTickets = tickets;
-                if (window.storageManager) window.storageManager.setUserData(user);
-                if (window.customerService && typeof window.customerService.createTicket === 'function') {
-                    window.customerService.createTicket('用户在游戏结束处提交投诉');
-                }
-            } catch (err) {
-                console.warn('记录投诉失败：', err);
+            if (window.customerService) {
+                window.customerService.open('complaint');
+            } else if (window.screenManager) {
+                window.screenManager.showScreen(CONFIG.SCREENS.COMPLAINT);
             }
         };
         yesBtn.addEventListener('click', yesBtn.__clickHandler);
