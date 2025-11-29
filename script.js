@@ -642,9 +642,21 @@ class ScreenManager {
     
     initGameScreen() {
         console.log('🎮 初始化游戏界面');
-        // 初始化游戏
+        // 确保游戏已初始化并自动开始
         if (window.gameManager) {
-            window.gameManager.init();
+            try {
+                // 若 gameManager 有 init 方法则调用（兼容性），然后自动启动游戏
+                if (typeof window.gameManager.init === 'function') window.gameManager.init();
+            } catch(e) { console.warn('gameManager.init 错误', e); }
+            try { window.gameManager.startGame(); } catch(e) { console.warn('gameManager.startGame 错误', e); }
+        }
+
+        // 绑定游戏界面的设置按钮（如果存在）
+        const settingsBtn = document.getElementById('menu-settings-btn');
+        if (settingsBtn) {
+            try { if (settingsBtn.__click) settingsBtn.removeEventListener('click', settingsBtn.__click); } catch(e){}
+            settingsBtn.__click = () => { this.showScreen(this.screens.SETTINGS); };
+            settingsBtn.addEventListener('click', settingsBtn.__click);
         }
     }
     
@@ -960,9 +972,12 @@ class AuthManager {
             return;
         }
 
-        // 直接进入主菜单（不经过 welcome 页面）
+        // 直接进入游戏界面（不经过主菜单）
         if (this.screens && this.screens.showScreen) {
-            this.screens.showScreen(this.screens.screens.MENU);
+            this.screens.showScreen(this.screens.screens.GAME);
+            // 更新玩家名显示
+            const playerNameEl = document.getElementById('player-name');
+            if (playerNameEl) playerNameEl.textContent = userData.nickname || '玩家';
         }
     }
     

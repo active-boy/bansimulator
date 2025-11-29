@@ -51,20 +51,12 @@
                     <p>体验小游戏后的审核机制</p>
                 </div>
                 
-                <div class="menu-card" data-target="invite-screen">
-                    <div class="menu-icon">🎁</div>
-                    <h3>邀请好友抽取解封机会</h3>
-                    <p>参与抽取获得解封机会</p>
-                    <div class="menu-badge">新活动</div>
-                </div>
+                <!-- 邀请抽取解封机会已移至独立页面（unban_lottery.html） -->
                 
                 <!-- Removed the standalone ban-simulator card and moved settings to header -->
             </div>
             
-            <div style="position:relative;">
-                <!-- settings button in top-right for logged-in pages -->
-                <button id="menu-settings-btn" title="系统设置" style="position:absolute;right:8px;top:8px;" class="secondary-btn">⚙️</button>
-            </div>
+            <!-- settings button 已移至游戏界面头部 -->
             <div class="menu-footer">
                 <!-- 切换账号入口已移除，游戏仅允许单账号登录 -->
                 <div class="share-note" style="margin-top:12px;font-size:0.85em;opacity:0.9;color:#fff;">请分享网址给好友 https://active-boy.github.io/bansimulator/</div>
@@ -79,6 +71,9 @@
             <div class="game-header">
                 <h2>🎮 贪吃蛇小游戏</h2>
                 <div class="player-info">玩家: <span id="player-name">游客</span></div>
+                <div style="position:absolute;right:8px;top:8px;">
+                    <button id="menu-settings-btn" title="系统设置" class="secondary-btn">⚙️</button>
+                </div>
                 <div class="share-note" style="margin-top:8px;font-size:0.85em;opacity:0.9;">请分享网址给好友让更多人被永封 https://active-boy.github.io/bansimulator/</div>
             </div>
             
@@ -114,134 +109,7 @@
         </div>
     </div>
     <!-- === HTML_GAME 结束 === -->
-<!-- === HTML_INVITE 开始 === -->
-    <!-- 邀请助力抽奖界面 -->
-    <div id="invite-screen" class="screen">
-        <div class="invite-container">
-            <div class="invite-header">
-                <h2>🎁 邀请好友抽取解封机会</h2>
-                <p>参与抽取解封机会，可能获得申诉资格或奖励。</p>
-            </div>
-            
-            <!-- 货币显示 -->
-            <div class="currency-display">
-                <div class="currency-item">
-                    <span class="currency-icon">🪙</span>
-                    <span class="currency-amount" id="gold-amount">0</span>
-                    <span class="currency-name">金币</span>
-                </div>
-                <div class="currency-item">
-                    <span class="currency-icon">💎</span>
-                    <span class="currency-amount" id="diamond-amount">0</span>
-                    <span class="currency-name">钻石</span>
-                </div>
-                <div class="currency-item">
-                    <span class="currency-icon">🍀</span>
-                    <span class="currency-amount" id="luck-amount">0</span>
-                    <span class="currency-name">幸运值</span>
-                </div>
-                <div class="currency-item">
-                    <span class="currency-icon">🎫</span>
-                    <span class="currency-amount" id="welfare-amount">10</span>
-                    <span class="currency-name">福利值</span>
-                </div>
-            </div>
-            
-            <!-- 抽奖转盘 -->
-            <div class="lottery-section">
-                <div class="lottery-wheel" id="lottery-wheel">
-                    <div class="wheel-center">
-                        <div class="wheel-pointer">🎯</div>
-                    </div>
-                    <div class="wheel-items">
-                        <div class="wheel-item" data-value="9">9💎</div>
-                        <div class="wheel-item" data-value="9">9💎</div>
-                        <div class="wheel-item" data-value="9">9💎</div>
-                        <div class="wheel-item" data-value="9">9💎</div>
-                        <div class="wheel-item" data-value="9">9💎</div>
-                        <div class="wheel-item" data-value="1">1🪙</div>
-                        <div class="wheel-item" data-value="9">9💎</div>
-                        <div class="wheel-item" data-value="9">9💎</div>
-                    </div>
-                </div>
-                
-                <div class="lottery-controls">
-                    <button id="spin-button" class="spin-btn">
-                        <span class="spin-text">抽奖一次</span>
-                        <span class="spin-cost">消耗: 1🪙</span>
-                    </button>
-                    
-                    <div class="spin-info">
-                        <div class="chance-display">
-                            中奖概率: <span id="gold-chance">0.1%</span>
-                        </div>
-                        <div class="pity-counter">
-                            保底计数: <span id="pity-count">0</span>/100
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- 兑换区域 -->
-            <div class="exchange-section">
-                <h3>💰 货币兑换</h3>
-                <div class="exchange-options">
-                    <div class="exchange-option">
-                        <span>10🎫 = 1🍀</span>
-                        <button class="exchange-btn" data-from="welfare" data-to="luck" data-rate="10">兑换</button>
-                    </div>
-                    <div class="exchange-option">
-                        <span>10🍀 = 1💎</span>
-                        <button class="exchange-btn" data-from="luck" data-to="diamond" data-rate="10">兑换</button>
-                    </div>
-                    <div class="exchange-option">
-                        <span>10💎 = 1🪙</span>
-                        <button class="exchange-btn" data-from="diamond" data-to="gold" data-rate="10">兑换</button>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- 邀请助力 -->
-            <div class="invite-section">
-                <h3>👥 邀请好友助力</h3>
-                <div class="invite-options">
-                    <div class="invite-option">
-                        <div class="invite-reward">+5🎫</div>
-                        <button class="invite-btn" data-reward="5">分享给好友</button>
-                        <div class="invite-desc">好友点击即可获得奖励</div>
-                    </div>
-                    <div class="invite-option">
-                        <div class="invite-reward">+20🎫</div>
-                        <button class="invite-btn" data-reward="20">邀请注册</button>
-                        <div class="invite-desc">好友注册得双倍奖励</div>
-                    </div>
-                    <div class="invite-option">
-                        <div class="invite-reward">+50🎫</div>
-                        <button class="invite-btn" data-reward="50">组建战队</button>
-                        <div class="invite-desc">3人成团瓜分大奖</div>
-                    </div>
-                </div>
-                
-                <div class="invite-simulation">
-                    <button id="simulate-invite" class="simulate-btn">🎭 邀请成功</button>
-                    <div class="simulate-desc">（开发测试功能：好友助力）</div>
-                </div>
-            </div>
-            
-            <!-- 抽奖记录 -->
-            <div class="history-section">
-                <h3>📊 抽奖记录</h3>
-                <div id="lottery-history" class="history-list">
-                    <div class="history-empty">暂无抽奖记录</div>
-                </div>
-            </div>
-            
-            <div class="invite-footer">
-                <button id="back-to-menu" class="secondary-btn">← 返回菜单</button>
-            </div>
-        </div>
-    </div>
-    <!-- === HTML_INVITE 结束 === -->
+<!-- 邀请/抽奖界面已移至独立页面：unban_lottery.html（仅在被封账号申请解封时访问） -->
 <!-- === HTML_OTHER 开始 === -->
     <!-- 投诉选择界面 -->
     <div id="complaint-screen" class="screen">
