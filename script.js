@@ -2229,8 +2229,15 @@ class CustomerService {
     }
 
     bindUI() {
+        // 兼容多处可能的客服入口：`contact-support`（旧 id）、`open-customer`（app header）、`banned-contact`（封禁页）
         const contactBtn = document.getElementById('contact-support');
         if (contactBtn) contactBtn.addEventListener('click', () => this.open());
+
+        const openHeader = document.getElementById('open-customer');
+        if (openHeader) openHeader.addEventListener('click', () => this.open());
+
+        const bannedContact = document.getElementById('banned-contact');
+        if (bannedContact) bannedContact.addEventListener('click', () => this.open('complaint'));
 
         const backBtn = document.getElementById('customer-back');
         if (backBtn) backBtn.addEventListener('click', () => this.close());
