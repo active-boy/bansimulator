@@ -960,6 +960,15 @@ class AuthManager {
             return;
         }
 
+        // 在用户登录后再初始化游戏管理器（延迟初始化）
+        try {
+            if (window.app && typeof window.app.initializeGameManager === 'function') {
+                await window.app.initializeGameManager();
+            }
+        } catch (e) {
+            console.warn('初始化游戏管理器时发生错误：', e);
+        }
+
         // 直接进入主菜单（不经过 welcome 页面）
         if (this.screens && this.screens.showScreen) {
             this.screens.showScreen(this.screens.screens.MENU);
@@ -2421,8 +2430,7 @@ class FengjinSimulator {
         );
         window.customerService = this.components.customerService;
 
-        // 延迟初始化游戏管理器（需要DOM元素）
-        await this.initializeGameManager();
+        // 游戏管理器将在用户登录后初始化（避免在未登录时占用资源/状态）
 
         // 初始化抽奖管理器
         this.components.lottery = new LotteryManager(this.components.storage);
@@ -2791,15 +2799,21 @@ function bindComplaintEvents() {
             // 支持直接点击按钮或点击其子元素
             if (t.id === 'complain-yes' || (t.closest && t.closest('#complain-yes'))) {
                 e.preventDefault();
-                if (window.customerService && typeof window.customerService.open === 'function') {
-                    window.customerService.open('complaint');
-                } else if (window.screenManager) {
-                    // 首先切换到客服屏幕，如果客服模块可用则让其打开具体话题
-                    window.screenManager.showScreen(CONFIG.SCREENS.CUSTOMER || 'customer-screen');
-                    setTimeout(() => { if (window.customerService) window.customerService.open('complaint'); }, 50);
-                } else {
-                    // 最后兜底：跳转到独立的 AI 客服页面
-                    window.location.href = 'ai_customer.html';
+                // 改为记录投诉并提示“已投诉”，不跳转到其他页面
+                Utils.showNotification('已投诉', 'success');
+                try {
+                    const user = (window.storageManager && window.storageManager.getUserData()) || {};
+                    const tickets = user.supportTickets || [];
+                    const ticket = { id: `T${Date.now()}`, content: '用户在游戏结束处提交投诉', status: 'submitted', at: new Date().toISOString() };
+                    tickets.push(ticket);
+                    user.supportTickets = tickets;
+                    if (window.storageManager) window.storageManager.setUserData(user);
+                    // 如果有客服对象，也让其记录工单
+                    if (window.customerService && typeof window.customerService.createTicket === 'function') {
+                        window.customerService.createTicket('用户在游戏结束处提交投诉');
+                    }
+                } catch (err) {
+                    console.warn('记录投诉失败：', err);
                 }
             }
         };
@@ -2812,13 +2826,19 @@ function bindComplaintEvents() {
         try { if (yesBtn.__clickHandler) yesBtn.removeEventListener('click', yesBtn.__clickHandler); } catch(e){}
         yesBtn.__clickHandler = (e) => {
             e.preventDefault();
-            if (window.customerService && typeof window.customerService.open === 'function') {
-                window.customerService.open('complaint');
-            } else if (window.screenManager) {
-                window.screenManager.showScreen(CONFIG.SCREENS.CUSTOMER || 'customer-screen');
-                setTimeout(() => { if (window.customerService) window.customerService.open('complaint'); }, 50);
-            } else {
-                window.location.href = 'ai_customer.html';
+            Utils.showNotification('已投诉', 'success');
+            try {
+                const user = (window.storageManager && window.storageManager.getUserData()) || {};
+                const tickets = user.supportTickets || [];
+                const ticket = { id: `T${Date.now()}`, content: '用户在游戏结束处提交投诉', status: 'submitted', at: new Date().toISOString() };
+                tickets.push(ticket);
+                user.supportTickets = tickets;
+                if (window.storageManager) window.storageManager.setUserData(user);
+                if (window.customerService && typeof window.customerService.createTicket === 'function') {
+                    window.customerService.createTicket('用户在游戏结束处提交投诉');
+                }
+            } catch (err) {
+                console.warn('记录投诉失败：', err);
             }
         };
         yesBtn.addEventListener('click', yesBtn.__clickHandler);
