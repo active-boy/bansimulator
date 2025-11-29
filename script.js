@@ -1313,7 +1313,19 @@ class AuthManager {
 class GameManager {
     constructor(canvasId = 'snake-canvas') {
         this.canvas = document.getElementById(canvasId);
+        if (!this.canvas) {
+            console.warn('GameManager: canvas not found, game disabled');
+            this.canvas = null;
+            this.ctx = null;
+            this.disabled = true;
+            // Still set minimal properties to avoid undefined errors
+            this.gridSize = 20;
+            this.tileCount = 20;
+            this.resetGame();
+            return;
+        }
         this.ctx = this.canvas.getContext('2d');
+        this.disabled = false;
         this.gridSize = 20;
         this.tileCount = this.canvas.width / this.gridSize;
         
@@ -1470,6 +1482,10 @@ class GameManager {
     }
 
     startGame() {
+        if (this.disabled) {
+            console.warn('GameManager: startGame called but game is disabled (no canvas)');
+            return;
+        }
         if (this.isRunning) return;
         
         this.isRunning = true;
@@ -1508,6 +1524,7 @@ class GameManager {
     }
 
     update() {
+        if (this.disabled) return;
         if (this.dx === 0 && this.dy === 0) return;
 
         // 移动蛇头
@@ -1549,6 +1566,8 @@ class GameManager {
     }
 
     draw() {
+        if (this.disabled || !this.ctx) return;
+
         // 清空画布
         this.ctx.fillStyle = '#1a202c';
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
