@@ -2292,7 +2292,34 @@ const appStyles = `
     @keyframes spin {
         to { transform: rotate(360deg); }
     }
+    @keyframes pulse {
+        0% { 
+            transform: translateY(0) scale(1); 
+            box-shadow: 0 6px 20px rgba(229, 62, 62, 0.4);
+        }
+        100% { 
+            transform: translateY(0) scale(1.05); 
+            box-shadow: 0 8px 25px rgba(229, 62, 62, 0.6);
+        }
+    }
+    
+    @keyframes shake {
+        0%, 100% { transform: translateX(0) translateY(0); }
+        25% { transform: translateX(-3px) translateY(-2px); }
+        50% { transform: translateX(3px) translateY(2px); }
+        75% { transform: translateX(-2px) translateY(-1px); }
+    }
+    
+    .custom-warning-notification.final-warning {
+        animation: pulse 0.6s infinite alternate, shake 0.5s ease-in-out;
+    }
+    
+    /* 确保通知显示在顶部 */
+    .custom-warning-notification {
+        z-index: 10001 !important;
+    }
 `;
+
 
 // 注入样式
 const styleElement = document.createElement('style');
