@@ -1319,34 +1319,57 @@ class GameManager {
         this.canvas = document.getElementById(canvasId);
         this.ctx = this.canvas ? this.canvas.getContext('2d') : null;
         this.gridSize = 20;
-        // 如果 canvas 存在，则根据宽度计算格子数，否则使用默认值
         this.tileCount = this.canvas ? Math.floor(this.canvas.width / this.gridSize) : 20;
-
+        
+        // 初始化游戏状态对象
+        this.gameState = {
+            snake: {
+                direction: 'right'  // 添加这个关键属性
+            },
+            isRunning: false,
+            isPaused: false,
+            gameOver: false
+        };
+        
+        // 添加当前方向跟踪
+        this.currentDirection = 'right';  // 初始化方向
+        
+        console.log('🎮 GameManager 初始化完成，画布:', !!this.canvas, '方向:', this.currentDirection);
+        
         this.resetGame();
         this.bindControls();
         this.gameLoop = this.gameLoop.bind(this);
     }
 
     resetGame() {
-        this.snake = [
-            {x: 10, y: 10}
-        ];
-        this.food = this.generateFood();
-        this.dx = 0;
-        this.dy = 0;
-        this.score = 0;
-        this.gameTime = 0;
-        this.isRunning = false;
-        this.isPaused = false;
-        this.gameOver = false;
-        this.lastUpdateTime = 0;
-        this.updateInterval = 150; // 毫秒
-
-        this.updateDisplay();
-        // 显示开始按钮以便测试/手动启动，并重置其文本为开始
-        const startBtn = document.getElementById('start-game-btn');
-        if (startBtn) { startBtn.style.display = 'inline-block'; startBtn.textContent = '▶️ 开始游戏'; }
+    this.snake = [
+        {x: 10, y: 10}
+    ];
+    this.food = this.generateFood();
+    this.dx = 0;
+    this.dy = 0;
+    this.score = 0;
+    this.gameTime = 0;
+    this.isRunning = false;
+    this.isPaused = false;
+    this.gameOver = false;
+    this.lastUpdateTime = 0;
+    this.updateInterval = 150;
+    
+    // 重置方向状态
+    this.currentDirection = 'right';
+    
+    console.log('🔄 游戏重置，方向重置为: right');
+    
+    this.updateDisplay();
+    
+    // 显示开始按钮
+    const startBtn = document.getElementById('start-game-btn');
+    if (startBtn) { 
+        startBtn.style.display = 'inline-block'; 
+        startBtn.textContent = '▶️ 开始游戏';
     }
+}
 
     generateFood() {
         let newFood;
@@ -1434,6 +1457,7 @@ class GameManager {
 
 // 检测移动设备并显示方向按钮
 initMobileControls() {
+    console.log('🔧 初始化移动控制...');
     const mobileControls = document.querySelector('.mobile-controls');
     if (!mobileControls) {
         console.error('❌ 未找到移动控制元素');
@@ -1473,14 +1497,22 @@ initMobileControls() {
 }
 
 // 修改蛇的方向函数
+// 修改蛇的方向函数
 changeSnakeDirection(direction) {
+    console.log('🎯 改变方向请求:', direction, '当前方向:', this.currentDirection);
+    
     // 防止直接反向移动
-    if (
-        (direction === 'up' && this.dy !== 1) ||
-        (direction === 'down' && this.dy !== -1) ||
-        (direction === 'left' && this.dx !== 1) ||
-        (direction === 'right' && this.dx !== -1)
-    ) {
+    const oppositeDirections = {
+        'up': 'down',
+        'down': 'up',
+        'left': 'right', 
+        'right': 'left'
+    };
+    
+    if (direction !== oppositeDirections[this.currentDirection]) {
+        this.currentDirection = direction;
+        
+        // 更新移动向量
         switch(direction) {
             case 'up':
                 this.dx = 0;
@@ -1499,6 +1531,10 @@ changeSnakeDirection(direction) {
                 this.dy = 0;
                 break;
         }
+        
+        console.log('✅ 方向改变成功:', this.currentDirection, 'dx:', this.dx, 'dy:', this.dy);
+    } else {
+        console.log('❌ 无效方向: 不能直接反向移动', direction, '->', oppositeDirections[this.currentDirection]);
     }
 }
 
