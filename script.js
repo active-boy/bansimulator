@@ -1874,10 +1874,6 @@ class FengjinSimulator {
         // 初始化游戏管理器（需要DOM元素）
         await this.initializeGameManager();
 
-        // 初始化抽奖管理器
-        this.components.lottery = new LotteryManager(this.components.storage);
-        window.lotteryManager = this.components.lottery;
-
         // 保存到全局变量以便调试
         window.app = this;
     }
