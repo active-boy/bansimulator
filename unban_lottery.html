@@ -169,29 +169,159 @@
     </div>
 
     <script>
-        document.getElementById('unban-spin').addEventListener('click', function(){
-        const btn = this;
-        const wheel = document.getElementById('unban-wheel');
+    // 转盘配置
+    const sectors = [
+        { text: "谢谢参与", color: "#4A5568", probability: 0.45 }, // 45%
+        { text: "再接再厉", color: "#2D3748", probability: 0.25 }, // 25%
+        { text: "运气不佳", color: "#1A202C", probability: 0.20 },  // 20%
+        { text: "明日再来", color: "#4A5568", probability: 0.09 },  // 9%
+        { text: "解封机会", color: "#48BB78", probability: 0.01 }   // 1% - 很难抽中
+    ];
+
+    // 转盘变量
+    let isSpinning = false;
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = 300;
+    canvas.height = 300;
+    
+    // 替换原来的转盘div
+    const wheelContainer = document.getElementById('unban-wheel');
+    wheelContainer.innerHTML = '';
+    wheelContainer.appendChild(canvas);
+    wheelContainer.style.background = 'transparent';
+
+    // 绘制转盘
+    function drawWheel() {
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 2;
+        const radius = 140;
+        let startAngle = 0;
+        
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // 绘制转盘分区
+        sectors.forEach((sector, index) => {
+            const arcAngle = 2 * Math.PI * sector.probability;
+            const endAngle = startAngle + arcAngle;
+            
+            // 绘制扇形
+            ctx.beginPath();
+            ctx.moveTo(centerX, centerY);
+            ctx.arc(centerX, centerY, radius, startAngle, endAngle);
+            ctx.closePath();
+            ctx.fillStyle = sector.color;
+            ctx.fill();
+            ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+            ctx.stroke();
+            
+            // 绘制文字
+            ctx.save();
+            ctx.translate(centerX, centerY);
+            ctx.rotate(startAngle + arcAngle / 2);
+            ctx.textAlign = 'right';
+            ctx.fillStyle = '#FFFFFF';
+            ctx.font = '14px Arial';
+            ctx.fillText(sector.text, radius - 10, 5);
+            ctx.restore();
+            
+            startAngle = endAngle;
+        });
+        
+        // 绘制中心圆
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, 20, 0, 2 * Math.PI);
+        ctx.fillStyle = '#2D3748';
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+        ctx.stroke();
+        
+        // 绘制指针
+        ctx.beginPath();
+        ctx.moveTo(centerX, centerY - 150);
+        ctx.lineTo(centerX - 10, centerY - 130);
+        ctx.lineTo(centerX + 10, centerY - 130);
+        ctx.closePath();
+        ctx.fillStyle = '#E53E3E';
+        ctx.fill();
+    }
+
+    // 旋转转盘
+    function spinWheel() {
+        if (isSpinning) return;
+        isSpinning = true;
+        
+        const btn = document.getElementById('unban-spin');
+        const resultBox = document.getElementById('unban-result');
         btn.disabled = true;
         btn.textContent = '抽取中...';
-        wheel.classList.add('spinning');
-    
-        setTimeout(() => {
-            const r = Math.random();
-            const win = r < 0.10; // 10% chance
-            const box = document.getElementById('unban-result');
+        resultBox.innerHTML = '<div style="color:#F6AD55">转盘旋转中...</div>';
         
-        if(win){
-            box.innerHTML = '<div style="color:#48bb78;font-weight:bold;font-size:18px">🎉 恭喜！获得解封券</div><div style="margin-top:8px;color:#a0aec0">请联系人工客服完成后续流程</div>';
-        } else {
-            box.innerHTML = '<div style="color:#f6ad55;font-size:16px">未获得解封券，再接再厉</div>';
+        // 随机选择结果（根据概率）
+        const random = Math.random();
+        let accumulatedProb = 0;
+        let selectedSector = sectors[0];
+        
+        for (const sector of sectors) {
+            accumulatedProb += sector.probability;
+            if (random <= accumulatedProb) {
+                selectedSector = sector;
+                break;
+            }
         }
         
-        btn.disabled = false;
-        btn.textContent = '抽取一次（消耗: 1 次机会）';
-        wheel.classList.remove('spinning');
-        }, 1200);
-        });
+        // 计算旋转角度（多转几圈然后停在选中的区域）
+        const spinDegrees = 360 * 5 + (360 * Math.random()); // 至少5圈
+        const sectorAngle = 360 * accumulatedProb; // 选中区域的结束角度
+        const stopAngle = 360 - sectorAngle + (360 * selectedSector.probability / 2); // 停在区域中间
+        
+        const totalRotation = spinDegrees + stopAngle;
+        const rotationTime = 3000; // 3秒
+        
+        // 应用旋转动画
+        canvas.style.transition = `transform ${rotationTime}ms cubic-bezier(0.2, 0.8, 0.3, 1)`;
+        canvas.style.transform = `rotate(${totalRotation}deg)`;
+        
+        // 显示结果
+        setTimeout(() => {
+            isSpinning = false;
+            btn.disabled = false;
+            btn.textContent = '抽取一次（消耗: 1 次机会）';
+            
+            if (selectedSector.text === "解封机会") {
+                resultBox.innerHTML = `
+                    <div style="color:#48BB78;font-weight:bold;font-size:18px">🎉 奇迹！获得解封机会！</div>
+                    <div style="margin-top:8px;color:#A0AEC0">请联系人工客服完成后续流程</div>
+                    <div style="margin-top:12px;background:rgba(72,187,120,0.1);padding:8px;border-radius:6px;border:1px solid rgba(72,187,120,0.3)">
+                        恭喜！你是今天的幸运儿！
+                    </div>
+                `;
+            } else {
+                resultBox.innerHTML = `
+                    <div style="color:#${selectedSector.text === "谢谢参与" ? "CBD5E0" : "F6AD55"};font-size:16px">
+                        ${selectedSector.text}，继续努力！
+                    </div>
+                    <div style="margin-top:8px;color:#718096;font-size:14px">
+                        解封机会概率极低，明天再来试试吧
+                    </div>
+                `;
+            }
+        }, rotationTime + 100);
+    }
+
+    // 初始化转盘
+    drawWheel();
+    
+    // 绑定抽奖按钮事件
+    document.getElementById('unban-spin').addEventListener('click', spinWheel);
+    
+    // 绑定投诉按钮事件
+    document.getElementById('go-complaint-ai').addEventListener('click', function(){
+        window.location.href = 'ai_customer.html';
+    });
+
+    // 添加重新绘制功能（窗口大小变化时）
+    window.addEventListener('resize', drawWheel);
 </script>
 </body>
 </html>
