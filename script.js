@@ -1435,17 +1435,40 @@ class GameManager {
 // 检测移动设备并显示方向按钮
 initMobileControls() {
     const mobileControls = document.querySelector('.mobile-controls');
-    if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
-        mobileControls.style.display = 'block';
+    if (!mobileControls) {
+        console.error('❌ 未找到移动控制元素');
+        return;
+    }
+    
+    // 更可靠的移动设备检测
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+                    'ontouchstart' in window ||
+                    navigator.maxTouchPoints > 0;
+    
+    console.log('📱 移动设备检测:', isMobile, '用户代理:', navigator.userAgent);
+    
+    if (isMobile) {
+        console.log('✅ 显示移动方向按钮');
+        mobileControls.style.display = 'block'; // 确保设置为block
         
         // 绑定方向按钮事件
         document.querySelectorAll('.direction-btn').forEach(btn => {
-            btn.addEventListener('touchstart', (e) => {
+            // 移除可能存在的旧事件监听器
+            btn.removeEventListener('touchstart', btn.__touchHandler);
+            
+            // 创建新的事件处理函数
+            btn.__touchHandler = (e) => {
                 e.preventDefault();
                 const direction = btn.getAttribute('data-direction');
+                console.log('🎯 方向按钮点击:', direction);
                 this.changeSnakeDirection(direction);
-            });
+            };
+            
+            btn.addEventListener('touchstart', btn.__touchHandler);
         });
+    } else {
+        console.log('💻 非移动设备，隐藏方向按钮');
+        mobileControls.style.display = 'none';
     }
 }
 
