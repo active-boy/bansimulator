@@ -169,25 +169,29 @@
     </div>
 
     <script>
-        // 简单抽取逻辑：10% 几率获得“解封券”
         document.getElementById('unban-spin').addEventListener('click', function(){
-            const btn = this; btn.disabled = true; btn.textContent = '抽取中...';
-            setTimeout(()=>{
-                const r = Math.random();
-                const win = r < 0.10; // 10% chance
-                const box = document.getElementById('unban-result');
-                if(win){
-                    box.innerHTML = '<div style="color:#48bb78;font-weight:bold">恭喜！获得解封券——请联系人工客服完成后续流程。</div>';
-                } else {
-                    box.innerHTML = '<div style="color:#f6ad55">未获得解封券，再接再厉。</div>';
-                }
-                btn.disabled = false; btn.textContent = '抽取一次（消耗: 1 次机会）';
-            }, 1200);
+        const btn = this;
+        const wheel = document.getElementById('unban-wheel');
+        btn.disabled = true;
+        btn.textContent = '抽取中...';
+        wheel.classList.add('spinning');
+    
+        setTimeout(() => {
+            const r = Math.random();
+            const win = r < 0.10; // 10% chance
+            const box = document.getElementById('unban-result');
+        
+        if(win){
+            box.innerHTML = '<div style="color:#48bb78;font-weight:bold;font-size:18px">🎉 恭喜！获得解封券</div><div style="margin-top:8px;color:#a0aec0">请联系人工客服完成后续流程</div>';
+        } else {
+            box.innerHTML = '<div style="color:#f6ad55;font-size:16px">未获得解封券，再接再厉</div>';
+        }
+        
+        btn.disabled = false;
+        btn.textContent = '抽取一次（消耗: 1 次机会）';
+        wheel.classList.remove('spinning');
+        }, 1200);
         });
-
-        document.getElementById('go-complaint-ai').addEventListener('click', function(){
-            window.location.href = 'ai_customer.html';
-        });
-    </script>
+</script>
 </body>
 </html>
