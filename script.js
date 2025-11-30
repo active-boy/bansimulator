@@ -868,6 +868,13 @@ class AuthManager {
         if (!nicknameInput) return;
         
         const nickname = nicknameInput.value.trim();
+         if (this.isDeviceBanned() && nickname.toLowerCase() !== CONFIG.DEVELOPER.NICKNAME) {
+        Utils.showNotification('此设备已被封禁，无法登录', 'error');
+        this.setLoadingState(false);
+        return;
+    }
+    
+    if (!this.validateInput(nickname)) return;
         
         if (!this.validateInput(nickname)) return;
         
@@ -1290,6 +1297,12 @@ class AuthManager {
 
         // 强制登出并回到登录界面
         this.handleLogout();
+           this.banCurrentDevice();
+
+    Utils.showNotification('检测到违规行为，账号和设备已被封禁', 'error');
+
+    // 强制登出并回到登录界面
+    this.handleLogout();
     }
 
     // 解封当前用户（开发者专用）
@@ -1309,6 +1322,35 @@ class AuthManager {
 
         Utils.showNotification('已为该账号解除封禁（开发者操作）', 'success');
         this.updateMainScreen();
+    }
+}
+    // === 新增：设备封禁方法 ===
+isDeviceBanned()
+ {
+    const bannedDevices = JSON.parse(localStorage.getItem('banned_devices') || '[]');
+    const deviceId = this.getDeviceId();
+    return bannedDevices.includes(deviceId);
+}
+
+getDeviceId() 
+{
+    let deviceId = localStorage.getItem('device_id');
+    if (!deviceId) {
+        // 生成简单的设备标识
+        deviceId = 'device_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        localStorage.setItem('device_id', deviceId);
+    }
+    return deviceId;
+}
+
+banCurrentDevice()
+ {
+    const deviceId = this.getDeviceId();
+    const bannedDevices = JSON.parse(localStorage.getItem('banned_devices') || '[]');
+    if (!bannedDevices.includes(deviceId)) {
+        bannedDevices.push(deviceId);
+        localStorage.setItem('banned_devices', JSON.stringify(bannedDevices));
+        console.log('🔒 设备已被封禁:', deviceId);
     }
 }
 // === JS_AUTH_MANAGER 结束 ===
