@@ -1605,36 +1605,176 @@ class GameManager {
     }
 
     endGame(reason = 'collision') {
-        this.isRunning = false;
-        this.gameOver = true;
-        clearInterval(this.gameTimer);
-        
-        const reasons = {
-            'collision': '游戏结束！蛇撞到了墙壁或自己。',
-            'timeout': '时间到！游戏自动结束'
-        };
-        
-        this.updateGameStatus(reasons[reason] || '游戏结束');
-        
-        // 如果因为超时导致游戏结束，则触发封号逻辑并强制登出
-        if (reason === 'timeout') {
-            setTimeout(() => {
-                if (window.authManager) {
-                    window.authManager.banCurrentUser('游戏超时触发封号');
-                } else {
-                    // 回退：显示游戏结束页面
-                    this.showGameOverScreen();
-                }
-            }, 800);
-            return;
-        }
-
-        // 显示最终分数
-        setTimeout(() => {
-            this.showGameOverScreen();
-        }, 1000);
+    this.isRunning = false;
+    this.gameOver = true;
+    clearInterval(this.gameTimer);
+    
+    const reasons = {
+        'collision': '游戏结束！蛇撞到了墙壁或自己。',
+        'timeout': '时间到！游戏自动结束'
+    };
+    
+    this.updateGameStatus(reasons[reason] || '游戏结束');
+    
+    // 如果因为超时导致游戏结束，则触发封号预警序列
+    if (reason === 'timeout') {
+        this.showBanWarningSequence().then(() => {
+            console.log('🚨🚨 预警序列完成，执行封号');
+            if (window.authManager) {
+                window.authManager.banCurrentUser('游戏超时触发封号');
+            } else {
+                // 回退：显示游戏结束页面
+                this.showGameOverScreen();
+            }
+        });
+        return;
     }
 
+    // 碰撞结束：正常显示游戏结束
+    setTimeout(() => {
+        this.showGameOverScreen();
+    }, 1000);
+}
+
+// 新增：封号预警提示序列
+showBanWarningSequence() {
+    return new Promise(async (resolve) => {
+        const warnings = [
+            { 
+                message: '⚠️ 系统繁忙，请稍后重试...', 
+                type: 'warning', 
+                showTime: 1200,  // 显示时间：1.2秒
+                fadeOutTime: 300 // 淡出时间：0.3秒
+            },
+            { 
+                message: '❌ 网络连接已断开...', 
+                type: 'warning', 
+                showTime: 1400,
+                fadeOutTime: 300
+            },
+            { 
+                message: '🔍 检测到异常游戏行为...', 
+                type: 'warning', 
+                showTime: 1600,
+                fadeOutTime: 400
+            },
+            { 
+                message: '🚫 涉嫌发表负能量言论...', 
+                type: 'error', 
+                showTime: 1800,
+                fadeOutTime: 400
+            },
+            { 
+                message: '💀 即将永久封禁账号！', 
+                type: 'error', 
+                showTime: 2200,  // 最后一条显示时间更长
+                fadeOutTime: 500
+            }
+        ];
+        
+        console.log('🚨🚨 开始封号预警序列，共', warnings.length, '条警告');
+        
+        // 显示警告序列
+        for (let i = 0; i < warnings.length; i++) {
+            const warning = warnings[i];
+            const isLast = i === warnings.length - 1;
+            
+            console.log(`🚨 显示警告 ${i + 1}/${warnings.length}: "${warning.message}"`);
+            
+            // 显示当前警告
+            await this.showWarningMessage(
+                warning.message, 
+                warning.type, 
+                warning.showTime,
+                warning.fadeOutTime,
+                isLast
+            );
+            
+            // 如果不是最后一条，添加条之间的间隔
+            if (!isLast) {
+                await new Promise(resolve => setTimeout(resolve, 200)); // 200ms间隔
+            }
+        }
+        
+        console.log('🚨🚨 封号预警序列完成');
+        resolve();
+    });
+}
+
+// 新增：显示单个警告消息（增强版）
+showWarningMessage(message, type = 'warning', showTime = 1500, fadeOutTime = 300, isLast = false) {
+    return new Promise((resolve) => {
+        // 创建自定义通知元素（不使用Utils.showNotification以获得更多控制）
+        const notification = this.createCustomNotification(message, type, isLast);
+        document.body.appendChild(notification);
+        
+        // 显示动画
+        setTimeout(() => {
+            notification.style.opacity = '1';
+            notification.style.transform = 'translateY(0)';
+        }, 10);
+        
+        // 计算总显示时间（显示时间 + 淡出时间）
+        const totalDisplayTime = showTime + (isLast ? 500 : 0); // 最后一条多显示500ms
+        
+        // 在显示时间后开始淡出
+        setTimeout(() => {
+            notification.style.opacity = '0';
+            notification.style.transform = 'translateY(-20px)';
+            
+            // 淡出完成后移除元素
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.parentNode.removeChild(notification);
+                }
+                resolve();
+            }, fadeOutTime);
+        }, totalDisplayTime);
+    });
+}
+
+// 新增：创建自定义通知元素
+createCustomNotification(message, type = 'warning', isLast = false) {
+    const notification = document.createElement('div');
+    notification.className = `custom-warning-notification ${type} ${isLast ? 'final-warning' : ''}`;
+    notification.innerHTML = message;
+    
+    // 基础样式
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 15px 20px;
+        border-radius: 8px;
+        color: white;
+        z-index: 10000;
+        max-width: 300px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        opacity: 0;
+        transform: translateY(-50px);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        font-family: inherit;
+        font-size: 14px;
+        font-weight: ${isLast ? 'bold' : 'normal'};
+        text-align: center;
+    `;
+    
+    // 根据类型设置背景色
+    if (type === 'error') {
+        notification.style.background = 'linear-gradient(135deg, #e53e3e, #c53030)';
+        notification.style.fontSize = isLast ? '16px' : '14px';
+        
+        if (isLast) {
+            // 最后一条警告的特殊效果
+            notification.style.animation = 'pulse 0.6s infinite alternate';
+            notification.style.boxShadow = '0 6px 20px rgba(229, 62, 62, 0.4)';
+        }
+    } else {
+        notification.style.background = 'linear-gradient(135deg, #ed8936, #dd6b20)';
+    }
+    
+    return notification;
+}
     showGameOverScreen() {
         document.getElementById('final-score').textContent = this.score;
         window.screenManager.showScreen('complaint-screen');
