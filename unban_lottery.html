@@ -6,11 +6,142 @@
     <title>抽取解封机会</title>
     <link rel="stylesheet" href="style.css">
     <style>
-        .page-container{max-width:900px;margin:40px auto;color:white;padding:20px}
-        .lottery-wheel{width:320px;height:320px;margin:20px auto;border-radius:50%;background:linear-gradient(135deg,#2d3748,#1a202c);display:flex;align-items:center;justify-content:center;position:relative}
-        .spin-btn{display:block;margin:12px auto;padding:12px 18px;font-size:16px}
-        .result-box{margin-top:12px;text-align:center}
-    </style>
+    body {
+        background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
+        color: #e2e8f0;
+        margin: 0;
+        padding: 0;
+        min-height: 100vh;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+    
+    .page-container {
+        max-width: 900px;
+        margin: 40px auto;
+        padding: 20px;
+        background: rgba(26, 32, 44, 0.8);
+        border-radius: 12px;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .lottery-wheel {
+        width: 320px;
+        height: 320px;
+        margin: 20px auto;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #2d3748, #1a202c);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        border: 3px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    }
+    
+    .lottery-wheel::before {
+        content: '';
+        position: absolute;
+        width: 340px;
+        height: 340px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #4299e1, #9f7aea);
+        z-index: -1;
+        filter: blur(10px);
+        opacity: 0.3;
+    }
+    
+    .spin-btn {
+        display: block;
+        margin: 20px auto;
+        padding: 14px 24px;
+        font-size: 16px;
+        font-weight: 600;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+    
+    .spin-btn:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(66, 153, 225, 0.4);
+    }
+    
+    .result-box {
+        margin-top: 20px;
+        text-align: center;
+        padding: 16px;
+        background: rgba(0, 0, 0, 0.3);
+        border-radius: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .lottery-section {
+        background: rgba(0, 0, 0, 0.2);
+        padding: 24px;
+        border-radius: 12px;
+        margin: 24px 0;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    
+    hr {
+        margin: 24px 0;
+        border: none;
+        height: 1px;
+        background: rgba(255, 255, 255, 0.1);
+    }
+    
+    h1, h2 {
+        color: #e2e8f0;
+        margin-bottom: 16px;
+    }
+    
+    h1 {
+        font-size: 28px;
+        text-align: center;
+    }
+    
+    p {
+        line-height: 1.6;
+        color: #cbd5e0;
+    }
+    
+    a {
+        color: #63b3ed;
+        text-decoration: none;
+        transition: color 0.3s ease;
+    }
+    
+    a:hover {
+        color: #90cdf4;
+        text-decoration: underline;
+    }
+    
+    .secondary-btn {
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: #e2e8f0;
+        padding: 12px 20px;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-size: 14px;
+    }
+    
+    .secondary-btn:hover {
+        background: rgba(255, 255, 255, 0.2);
+        transform: translateY(-1px);
+    }
+    
+    /* 转盘动画效果 */
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    
+    .spinning {
+        animation: spin 1.2s ease-out;
+    }
+</style>
 </head>
 <body>
     <div class="page-container">
