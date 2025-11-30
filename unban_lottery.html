@@ -169,6 +169,233 @@
     </div>
 
     <script>
+    // 智能提示系统配置
+    const MESSAGE_SYSTEM = {
+        // 基础提示消息
+        baseMessages: [
+            "你的账号已永久封禁，暂不支持找回。",
+            "请联系客服重试解封流程。",
+            "系统检测到异常登录行为，暂无法解封。",
+            "该账号存在严重违规记录，解封申请被拒绝。",
+            "请等待24小时后再尝试解封。"
+        ],
+        
+        // 审核相关提示
+        reviewMessages: [
+            "正在审核中，这将是你第一次解封申请...",
+            "系统正在验证账号信息，请耐心等待...",
+            "审核流程已启动，预计需要5-10分钟...",
+            "人工审核中，请保持网络畅通..."
+        ],
+        
+        // 统计数据提示
+        statsMessages: [
+            "已有114,514人成功解封，继续努力！",
+            "今日已有2,337人获得解封机会！",
+            "当前解封成功率：0.87%，祝你好运！",
+            "本月累计解封账号：8,675个"
+        ],
+        
+        // 失败后续提示
+        failureFollowups: [
+            "解封失败，请稍后重试。",
+            "申请未通过，24小时后可再次尝试。",
+            "审核不通过，请联系客服了解详情。",
+            "系统繁忙，请稍后再提交申请。"
+        ],
+        
+        // 特殊条件提示
+        specialConditions: {
+            firstAttempt: "首次解封申请，正在优先处理...",
+            multipleFailures: "检测到多次失败记录，建议联系客服。",
+            luckyUser: "检测到幸运用户标识，正在加速处理..."
+        }
+    };
+
+    // 用户状态跟踪
+    let userStats = {
+        attemptCount: 0,
+        firstAttempt: true,
+        lastAttempt: null,
+        failureCount: 0
+    };
+
+    // 加载用户统计数据
+    function loadUserStats() {
+        try {
+            const saved = localStorage.getItem('unban_user_stats');
+            if (saved) {
+                userStats = { ...userStats, ...JSON.parse(saved) };
+            }
+        } catch (e) {
+            console.log('无法加载用户统计');
+        }
+    }
+
+    // 保存用户统计数据
+    function saveUserStats() {
+        try {
+            localStorage.setItem('unban_user_stats', JSON.stringify(userStats));
+        } catch (e) {
+            console.log('无法保存用户统计');
+        }
+    }
+
+    // 获取智能提示消息
+    function getSmartMessage(result) {
+        userStats.attemptCount++;
+        userStats.lastAttempt = new Date().toISOString();
+        
+        // 根据用户历史生成智能提示
+        if (userStats.firstAttempt) {
+            userStats.firstAttempt = false;
+            return {
+                message: MESSAGE_SYSTEM.specialConditions.firstAttempt,
+                type: 'info',
+                showTime: 3000
+            };
+        }
+        
+        if (userStats.failureCount >= 3) {
+            return {
+                message: MESSAGE_SYSTEM.specialConditions.multipleFailures,
+                type: 'warning', 
+                showTime: 3500
+            };
+        }
+        
+        // 10%几率显示统计信息
+        if (Math.random() < 0.1) {
+            return {
+                message: MESSAGE_SYSTEM.statsMessages[
+                    Math.floor(Math.random() * MESSAGE_SYSTEM.statsMessages.length)
+                ],
+                type: 'info',
+                showTime: 2800
+            };
+        }
+        
+        // 20%几率显示审核信息（带延迟失败提示）
+        if (Math.random() < 0.2) {
+            return {
+                message: MESSAGE_SYSTEM.reviewMessages[
+                    Math.floor(Math.random() * MESSAGE_SYSTEM.reviewMessages.length)
+                ],
+                type: 'review', // 特殊类型，会触发延迟提示
+                showTime: 4000
+            };
+        }
+        
+        // 默认返回基础提示
+        return {
+            message: MESSAGE_SYSTEM.baseMessages[
+                Math.floor(Math.random() * MESSAGE_SYSTEM.baseMessages.length)
+            ],
+            type: 'error',
+            showTime: 2500
+        };
+    }
+
+    // 显示智能提示消息
+    function showSmartMessage(messageConfig) {
+        const resultBox = document.getElementById('unban-result');
+        if (!resultBox) return;
+        
+        // 清空之前的内容
+        resultBox.innerHTML = '';
+        
+        // 创建主消息元素
+        const messageEl = document.createElement('div');
+        messageEl.style.cssText = `
+            color: ${getMessageColor(messageConfig.type)};
+            font-weight: ${messageConfig.type === 'review' ? '600' : 'normal'};
+            text-align: center;
+            margin: 10px 0;
+            padding: 12px;
+            border-radius: 8px;
+            background: ${getMessageBackground(messageConfig.type)};
+            border: 1px solid ${getMessageBorderColor(messageConfig.type)};
+            animation: fadeInUp 0.5s ease;
+        `;
+        messageEl.textContent = messageConfig.message;
+        resultBox.appendChild(messageEl);
+        
+        // 如果是审核类型，添加延迟失败提示
+        if (messageConfig.type === 'review') {
+            setTimeout(() => {
+                showFailureFollowup(messageEl);
+            }, messageConfig.showTime - 500);
+        }
+        
+        // 保存用户状态
+        if (messageConfig.type !== 'review') {
+            userStats.failureCount++;
+        }
+        saveUserStats();
+    }
+
+    // 显示失败后续提示
+    function showFailureFollowup(previousElement) {
+        const followup = MESSAGE_SYSTEM.failureFollowups[
+            Math.floor(Math.random() * MESSAGE_SYSTEM.failureFollowups.length)
+        ];
+        
+        const followupEl = document.createElement('div');
+        followupEl.style.cssText = `
+            color: #e53e3e;
+            font-size: 14px;
+            text-align: center;
+            margin: 8px 0;
+            padding: 8px;
+            background: rgba(229, 62, 62, 0.1);
+            border-radius: 6px;
+            animation: fadeIn 0.5s ease;
+            border-left: 3px solid #e53e3e;
+        `;
+        followupEl.textContent = followup;
+        previousElement.parentNode.appendChild(followupEl);
+        
+        // 更新失败计数
+        userStats.failureCount++;
+        saveUserStats();
+    }
+
+    // 工具函数：获取消息颜色
+    function getMessageColor(type) {
+        const colors = {
+            'info': '#4299e1',
+            'warning': '#ed8936', 
+            'error': '#e53e3e',
+            'review': '#805ad5',
+            'success': '#48bb78'
+        };
+        return colors[type] || '#718096';
+    }
+
+    // 工具函数：获取消息背景
+    function getMessageBackground(type) {
+        const backgrounds = {
+            'info': 'rgba(66, 153, 225, 0.1)',
+            'warning': 'rgba(237, 137, 54, 0.1)',
+            'error': 'rgba(229, 62, 62, 0.1)',
+            'review': 'rgba(128, 90, 213, 0.1)',
+            'success': 'rgba(72, 187, 120, 0.1)'
+        };
+        return backgrounds[type] || 'rgba(113, 128, 150, 0.1)';
+    }
+
+    // 工具函数：获取边框颜色
+    function getMessageBorderColor(type) {
+        const borders = {
+            'info': 'rgba(66, 153, 225, 0.3)',
+            'warning': 'rgba(237, 137, 54, 0.3)',
+            'error': 'rgba(229, 62, 62, 0.3)',
+            'review': 'rgba(128, 90, 213, 0.3)',
+            'success': 'rgba(72, 187, 120, 0.3)'
+        };
+        return borders[type] || 'rgba(113, 128, 150, 0.3)';
+    }
+
     // 转盘配置
     const sectors = [
         { text: "谢谢参与", color: "#4A5568", probability: 0.45 }, // 45%
@@ -257,6 +484,9 @@
         btn.textContent = '抽取中...';
         resultBox.innerHTML = '<div style="color:#F6AD55">转盘旋转中...</div>';
         
+        // 加载用户统计数据
+        loadUserStats();
+        
         // 随机选择结果（根据概率）
         const random = Math.random();
         let accumulatedProb = 0;
@@ -296,18 +526,37 @@
                         恭喜！你是今天的幸运儿！
                     </div>
                 `;
+                // 重置失败计数
+                userStats.failureCount = 0;
+                saveUserStats();
             } else {
-                resultBox.innerHTML = `
-                    <div style="color:#${selectedSector.text === "谢谢参与" ? "CBD5E0" : "F6AD55"};font-size:16px">
-                        ${selectedSector.text}，继续努力！
-                    </div>
-                    <div style="margin-top:8px;color:#718096;font-size:14px">
-                        解封机会概率极低，明天再来试试吧
-                    </div>
-                `;
+                // 未中奖：显示智能提示
+                const messageConfig = getSmartMessage(false);
+                showSmartMessage(messageConfig);
             }
         }, rotationTime + 100);
     }
+
+    // 添加CSS动画
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+    `;
+    document.head.appendChild(style);
 
     // 初始化转盘
     drawWheel();
@@ -322,6 +571,12 @@
 
     // 添加重新绘制功能（窗口大小变化时）
     window.addEventListener('resize', drawWheel);
+
+    // 页面加载时初始化用户统计
+    document.addEventListener('DOMContentLoaded', function() {
+        loadUserStats();
+        console.log('🔮 智能提示系统已加载，用户尝试次数:', userStats.attemptCount);
+    });
 </script>
 </body>
 </html>
