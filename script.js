@@ -908,17 +908,14 @@ class AuthManager {
                         this.setLoadingState(false);
                         return;
                     }
-                } else {
+               } else {
                     // 非管理员：转到客服申诉流程
-                    Utils.showNotification('请稍等，正在联系客服…', 'info');
-                    if (window.customerService) {
-                        window.customerService.open('appeal');
-                    } else if (window.screenManager) {
-                        window.screenManager.showScreen(CONFIG.SCREENS.COMPLAINT);
-                    }
-                    this.setLoadingState(false);
-                    return;
-                }
+                Utils.showNotification('请稍等，正在联系客服…', 'info');
+                    // 统一跳转到客服页面
+                window.location.href = 'ai_customer.html';
+                this.setLoadingState(false);
+                return;
+}
             }
 
             // 检查开发者模式
@@ -1259,7 +1256,7 @@ class AuthManager {
 
         // 申诉/申请解封按钮：若当前存储用户为 admin，则提示登录成功；否则跳转到独立的解封抽取页
        // 申诉/申请解封按钮：若当前存储用户为 admin，则直接解封；否则跳转到解封抽取页面
-if (appeal) appeal.onclick = () => {
+        if (appeal) appeal.onclick = () => {
     try {
         const stored = this.storage.getUserData() || {};
         const nick = (stored.nickname || '').toLowerCase();
@@ -1267,11 +1264,11 @@ if (appeal) appeal.onclick = () => {
             // 开发者直接解封
             this.unbanCurrentUser();
         } else {
-            // 非管理员跳转到解封抽取页面
-            window.location.href = 'unban_lottery.html';
+            // 非管理员跳转到客服页面
+            window.location.href = 'ai_customer.html';
         }
     } catch (e) {
-        window.location.href = 'unban_lottery.html';
+        window.location.href = 'ai_customer.html';
     }
 };
 
