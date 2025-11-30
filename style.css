@@ -482,6 +482,7 @@ body {
 .customer-input input::placeholder { color: rgba(255,255,255,0.6); }
 
 /* === CSS_MENU 结束 === */
+
 /* === CSS_GAME 开始 === */
 /* 贪吃蛇游戏界面样式 */
 .game-container {
@@ -587,6 +588,74 @@ body {
     background: #718096;
 }
 /* === CSS_GAME 结束 === */
+/* === CSS_GAME 结束 === */
+
+/* === CSS_MOBILE_CONTROLS 开始 === */
+/* 移动设备方向控制按钮样式 */
+.mobile-controls {
+    display: none; /* 默认隐藏，JS会在移动设备上显示 */
+    margin-top: 20px;
+    text-align: center;
+    padding: 10px;
+}
+
+.direction-btn {
+    width: 60px;
+    height: 60px;
+    font-size: 24px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    border: none;
+    border-radius: 50%;
+    color: white;
+    cursor: pointer;
+    touch-action: manipulation;
+    user-select: none;
+    margin: 5px;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.direction-btn:active {
+    background: linear-gradient(135deg, #5a6fd8, #6a42a5);
+    transform: scale(0.95);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* 移动设备响应式调整 */
+@media (max-width: 768px) {
+    .mobile-controls {
+        display: block !important; /* 在移动设备上强制显示 */
+    }
+    
+    .direction-btn {
+        width: 50px;
+        height: 50px;
+        font-size: 20px;
+    }
+}
+
+/* 确保游戏区域在移动设备上有足够空间 */
+@media (max-width: 480px) {
+    .game-area {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    #snake-canvas {
+        width: 100%;
+        max-width: 300px;
+        height: auto;
+    }
+    
+    .direction-btn {
+        width: 45px;
+        height: 45px;
+        font-size: 18px;
+    }
+}
+/* === CSS_MOBILE_CONTROLS 结束 === */
+
+/* === CSS_INVITE 开始 === */
 /* === CSS_INVITE 开始 === */
 /* 邀请助力抽奖界面样式 */
 .invite-container {
