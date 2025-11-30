@@ -3,151 +3,552 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI 客服</title>
-    <link rel="stylesheet" href="style.css">
-
+    <title>AI 客服 - 智能助手</title>
     <style>
-    body {
-        background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
-        color: #e2e8f0;
-        margin: 0;
-        padding: 0;
-        min-height: 100vh;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    }
-    
-    .ai-container {
-        max-width: 900px;
-        margin: 40px auto;
-        padding: 20px;
-        background: rgba(26, 32, 44, 0.8);
-        border-radius: 12px;
-        backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-    }
-    
-    .chat-box {
-        background: rgba(0, 0, 0, 0.3);
-        padding: 16px;
-        border-radius: 12px;
-        height: 420px;
-        overflow: auto;
-        border: 1px solid rgba(255, 255, 255, 0.1);
-    }
-    
-    .msg.agent {
-        background: rgba(66, 153, 225, 0.2);
-        padding: 12px;
-        border-radius: 8px;
-        margin: 12px 0;
-        border-left: 4px solid #4299e1;
-    }
-    
-    .msg.user {
-        background: rgba(72, 187, 120, 0.2);
-        padding: 12px;
-        border-radius: 8px;
-        margin: 12px 0;
-        text-align: right;
-        border-right: 4px solid #48bb78;
-    }
-    
-    .ai-input {
-        display: flex;
-        gap: 12px;
-        margin-top: 20px;
-    }
-    
-    .ai-input input {
-        flex: 1;
-        padding: 12px;
-        border-radius: 8px;
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        background: rgba(0, 0, 0, 0.3);
-        color: #e2e8f0;
-        font-size: 16px;
-    }
-    
-    .ai-input input:focus {
-        outline: none;
-        border-color: #4299e1;
-        box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
-    }
-    
-    .ai-input input::placeholder {
-        color: #a0aec0;
-    }
-    
-    a {
-        color: #63b3ed;
-        text-decoration: none;
-    }
-    
-    a:hover {
-        text-decoration: underline;
-    }
-    
-    /* 滚动条样式 */
-    .chat-box::-webkit-scrollbar {
-        width: 6px;
-    }
-    
-    .chat-box::-webkit-scrollbar-track {
-        background: rgba(0, 0, 0, 0.1);
-        border-radius: 3px;
-    }
-    
-    .chat-box::-webkit-scrollbar-thumb {
-        background: rgba(255, 255, 255, 0.3);
-        border-radius: 3px;
-    }
-</style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
+            color: #e2e8f0;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        
+        .ai-container {
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 20px;
+            background: rgba(26, 32, 44, 0.8);
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .chat-box {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 16px;
+            border-radius: 12px;
+            height: 420px;
+            overflow: auto;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 20px;
+        }
+        
+        .msg {
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin: 12px 0;
+            max-width: 80%;
+            word-wrap: break-word;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        .msg.agent {
+            background: rgba(66, 153, 225, 0.2);
+            border-left: 4px solid #4299e1;
+            align-self: flex-start;
+        }
+        
+        .msg.user {
+            background: rgba(72, 187, 120, 0.2);
+            border-right: 4px solid #48bb78;
+            align-self: flex-end;
+            margin-left: auto;
+        }
+        
+        .msg.system {
+            background: rgba(237, 137, 54, 0.2);
+            border-left: 4px solid #ed8936;
+            text-align: center;
+            max-width: 100%;
+            font-size: 0.9em;
+        }
+        
+        .ai-input {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+        }
+        
+        .ai-input input {
+            flex: 1;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(0, 0, 0, 0.3);
+            color: #e2e8f0;
+            font-size: 16px;
+        }
+        
+        .ai-input input:focus {
+            outline: none;
+            border-color: #4299e1;
+            box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
+        }
+        
+        .ai-input input::placeholder {
+            color: #a0aec0;
+        }
+        
+        .primary-btn {
+            background: linear-gradient(135deg, #4299e1, #3182ce);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .primary-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(66, 153, 225, 0.4);
+        }
+        
+        .primary-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .quick-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #e2e8f0;
+            padding: 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9em;
+            text-align: center;
+        }
+        
+        .quick-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-1px);
+        }
+        
+        .typing-indicator {
+            display: none;
+            align-items: center;
+            padding: 12px 16px;
+            background: rgba(66, 153, 225, 0.2);
+            border-left: 4px solid #4299e1;
+            border-radius: 8px;
+            margin: 12px 0;
+            max-width: 80%;
+        }
+        
+        .typing-dots {
+            display: flex;
+            gap: 4px;
+        }
+        
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #4299e1;
+            animation: typing 1.4s infinite ease-in-out;
+        }
+        
+        .typing-dot:nth-child(1) { animation-delay: -0.32s; }
+        .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+        
+        a {
+            color: #63b3ed;
+            text-decoration: none;
+        }
+        
+        a:hover {
+            text-decoration: underline;
+        }
+        
+        .chat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9em;
+            color: #a0aec0;
+        }
+        
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #48bb78;
+        }
+        
+        /* 动画 */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes typing {
+            0%, 80%, 100% { transform: scale(0.8); opacity: 0.5; }
+            40% { transform: scale(1); opacity: 1; }
+        }
+        
+        /* 滚动条样式 */
+        .chat-box::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .chat-box::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.1);
+            border-radius: 3px;
+        }
+        
+        .chat-box::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 3px;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .ai-container {
+                margin: 20px 10px;
+                padding: 15px;
+            }
+            
+            .chat-box {
+                height: 350px;
+            }
+            
+            .quick-actions {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
 </head>
 <body>
     <div class="ai-container">
-        <h1>🧾 AI 客服</h1>
-        <p>本页面为人工客服。可参考主程序的客服逻辑。</p>
+        <div class="chat-header">
+            <h1>🤖 AI 客服助手</h1>
+            <div class="status-indicator">
+                <div class="status-dot"></div>
+                <span>在线</span>
+            </div>
+        </div>
+        
+        <p>智能客服已就绪，请问有什么可以帮助您的？</p>
 
         <div class="chat-box" id="ai-chat">
-            <div class="msg agent">您好，这里是模拟客服。请简述您的问题（例：为什么我被封号？）。</div>
+            <div class="msg agent">您好，我是AI客服助手，可以为您解答关于账号封禁、申诉流程、游戏问题等方面的疑问。请简要描述您的问题。</div>
+            <div class="msg system">💡 提示：您可以点击下方快捷问题或直接输入您的问题</div>
+        </div>
+
+        <div class="quick-actions">
+            <button class="quick-btn" data-question="为什么我的账号被封了？">账号封禁原因</button>
+            <button class="quick-btn" data-question="如何申诉解封？">申诉解封流程</button>
+            <button class="quick-btn" data-question="游戏运行不稳定怎么办？">游戏问题</button>
+            <button class="quick-btn" data-question="解封需要多长时间？">处理时间</button>
         </div>
 
         <div class="ai-input">
-            <input id="ai-input" placeholder="输入问题，例如：为何我被封号？">
+            <input id="ai-input" placeholder="输入您的问题，例如：账号封禁原因、申诉流程...">
             <button id="ai-send" class="primary-btn">发送</button>
         </div>
 
-        <div style="margin-top:12px">
+        <div style="margin-top:12px; text-align: center;">
             <a href="unban_lottery.html">← 返回解封抽取页面</a>
         </div>
     </div>
 
+    <div class="typing-indicator" id="typing-indicator">
+        <span>客服正在输入</span>
+        <div class="typing-dots">
+            <div class="typing-dot"></div>
+            <div class="typing-dot"></div>
+            <div class="typing-dot"></div>
+        </div>
+    </div>
+
     <script>
+        // DOM元素
         const chat = document.getElementById('ai-chat');
         const input = document.getElementById('ai-input');
         const send = document.getElementById('ai-send');
+        const typingIndicator = document.getElementById('typing-indicator');
+        const quickButtons = document.querySelectorAll('.quick-btn');
 
-        function appendMsg(role, text){
-            const d = document.createElement('div');
-            d.className = 'msg ' + role; d.textContent = text; chat.appendChild(d); chat.scrollTop = chat.scrollHeight;
+        // 智能客服响应系统
+        const responseSystem = {
+            // 意图识别关键词
+            intents: {
+                greeting: { keywords: ['你好', '您好', 'hello', 'hi', '在吗', '有人吗'], priority: 1 },
+                banReason: { keywords: ['为什么封', '封号原因', '为何封', '封禁理由', '为什么被封', '原因'], priority: 5 },
+                appeal: { keywords: ['申诉', '解封', '申请解封', '如何解封', '怎么解封', '恢复账号'], priority: 5 },
+                gameIssue: { keywords: ['游戏卡', '闪退', '运行不了', '打不开', 'bug', '错误', '问题'], priority: 4 },
+                time: { keywords: ['多久', '多长时间', '何时', '时间', '几天', '什么时候'], priority: 3 },
+                complaint: { keywords: ['投诉', '举报', '不满', '意见', '建议', '反馈'], priority: 4 },
+                thanks: { keywords: ['谢谢', '感谢', '多谢', 'thx', '3q'], priority: 2 },
+                goodbye: { keywords: ['再见', '拜拜', '退出', '结束', '88'], priority: 1 }
+            },
+            
+            // 响应模板
+            responses: {
+                greeting: [
+                    "您好！我是AI客服助手，很高兴为您服务。请问有什么可以帮您？",
+                    "您好，客服助手为您服务，请描述您遇到的问题。",
+                    "您好，请问需要什么帮助？"
+                ],
+                banReason: [
+                    "账号封禁通常是由于违反用户协议导致的，常见原因包括：游戏超时、异常行为、多次违规等。具体原因需要查看您的账号记录。",
+                    "封禁原因可能包括：1) 游戏超时触发系统自动封禁 2) 检测到异常操作 3) 多次违反社区准则。您可以通过申诉了解具体原因。",
+                    "系统检测到账号存在异常活动或违反平台规则的行为。如需详细了解，请提供账号信息进行查询。"
+                ],
+                appeal: [
+                    "申诉解封流程：1) 填写申诉表单 2) 提供相关证明 3) 等待审核（通常1-3个工作日）4) 查看审核结果。普通用户申诉不会自动解封。",
+                    "如需申诉，请提供：账号昵称、封禁时间、您认为封禁错误的原因。我们的客服团队会在核实后给予回复。",
+                    "解封申诉需要经过人工审核。请确保提供真实有效的信息，审核期通常为1-5个工作日。"
+                ],
+                gameIssue: [
+                    "游戏运行问题可能是由于网络连接、设备兼容性或游戏版本问题导致。建议：1) 检查网络 2) 重启游戏 3) 更新到最新版本。",
+                    "如果您遇到游戏卡顿或闪退，可以尝试：清理缓存、关闭后台应用、检查设备存储空间。如问题持续，请提供详细错误信息。",
+                    "游戏技术问题我们的开发团队正在持续优化。您可以尝试重新安装游戏或联系技术支持获取更详细的帮助。"
+                ],
+                time: [
+                    "申诉处理时间通常为1-3个工作日，复杂情况可能需要5-7天。我们会通过系统消息通知您审核结果。",
+                    "解封审核时间视情况而定，一般需要1-5个工作日。节假日可能会有所延长，请您耐心等待。",
+                    "客服回复时间通常在24小时内，紧急问题我们会优先处理。您可以通过消息中心查看处理进度。"
+                ],
+                complaint: [
+                    "感谢您的反馈，我们会认真记录并改进。请详细描述您遇到的问题，以便我们更好地为您服务。",
+                    "抱歉给您带来不便，请提供具体投诉内容，我们的客服团队会尽快核实并处理。",
+                    "我们重视每一位用户的意见，您的反馈将帮助我们提升服务质量。请描述具体情况，我们会及时处理。"
+                ],
+                thanks: [
+                    "不客气，很高兴能帮助您！如有其他问题，请随时联系我们。",
+                    "感谢您的认可，祝您生活愉快！",
+                    "您太客气了，这是我们应该做的。有问题随时来找我！"
+                ],
+                goodbye: [
+                    "感谢您的咨询，再见！如有问题欢迎随时回来。",
+                    "再见，祝您有愉快的一天！",
+                    "感谢使用我们的服务，期待再次为您服务！"
+                ],
+                fallback: [
+                    "抱歉，我没有完全理解您的问题。您可以更具体地描述一下吗？",
+                    "您的问题可能需要更详细的信息，能否再解释一下？",
+                    "我目前主要处理账号封禁、申诉解封、游戏问题等相关咨询，请问您具体遇到什么情况？"
+                ]
+            },
+            
+            // 特殊情境响应
+            specialCases: {
+                urgent: {
+                    keywords: ['紧急', '急需', '马上', '立刻', '快点', '加急'],
+                    response: "理解您的紧急情况，我们会优先处理您的问题。请提供详细信息以便我们快速响应。"
+                },
+                angry: {
+                    keywords: ['垃圾', '废物', '坑爹', '骗人', '投诉', '举报', '生气', '愤怒'],
+                    response: "非常抱歉给您带来不愉快的体验，我们会认真对待您的问题并尽快解决。请告诉我们具体情况，我们会尽力帮助您。"
+                },
+                repeat: {
+                    response: "您似乎对之前的回答还有疑问，请告诉我具体哪方面需要进一步解释，我会尽力为您说明。"
+                }
+            },
+            
+            // 对话历史
+            conversationHistory: [],
+            
+            // 分析用户意图
+            analyzeIntent(message) {
+                message = message.toLowerCase().trim();
+                let detectedIntents = [];
+                
+                // 检查特殊情境
+                for (const [caseType, caseData] of Object.entries(this.specialCases)) {
+                    if (caseData.keywords) {
+                        for (const keyword of caseData.keywords) {
+                            if (message.includes(keyword)) {
+                                return { intent: 'special', case: caseType, confidence: 0.9 };
+                            }
+                        }
+                    }
+                }
+                
+                // 检查重复问题
+                if (this.conversationHistory.length > 0) {
+                    const lastUserMessage = this.conversationHistory[this.conversationHistory.length - 2];
+                    if (lastUserMessage && lastUserMessage.role === 'user') {
+                        // 简单相似度检测
+                        const similarity = this.calculateSimilarity(message, lastUserMessage.content.toLowerCase());
+                        if (similarity > 0.7) {
+                            return { intent: 'repeat', confidence: 0.8 };
+                        }
+                    }
+                }
+                
+                // 常规意图检测
+                for (const [intent, data] of Object.entries(this.intents)) {
+                    for (const keyword of data.keywords) {
+                        if (message.includes(keyword)) {
+                            detectedIntents.push({
+                                intent: intent,
+                                confidence: 0.7 + (0.3 * (keyword.length / 10)) // 根据关键词长度调整置信度
+                            });
+                            break;
+                        }
+                    }
+                }
+                
+                if (detectedIntents.length > 0) {
+                    // 返回置信度最高的意图
+                    detectedIntents.sort((a, b) => b.confidence - a.confidence);
+                    return detectedIntents[0];
+                }
+                
+                return { intent: 'fallback', confidence: 0.1 };
+            },
+            
+            // 计算文本相似度（简易版）
+            calculateSimilarity(text1, text2) {
+                const words1 = new Set(text1.split(/\s+/));
+                const words2 = new Set(text2.split(/\s+/));
+                const intersection = new Set([...words1].filter(x => words2.has(x)));
+                const union = new Set([...words1, ...words2]);
+                return intersection.size / union.size;
+            },
+            
+            // 生成响应
+            generateResponse(intentData) {
+                let response;
+                
+                if (intentData.intent === 'special') {
+                    response = this.specialCases[intentData.case].response;
+                } else if (intentData.intent === 'repeat') {
+                    response = this.specialCases.repeat.response;
+                } else {
+                    const possibleResponses = this.responses[intentData.intent] || this.responses.fallback;
+                    response = possibleResponses[Math.floor(Math.random() * possibleResponses.length)];
+                }
+                
+                // 80%几率添加后续问题建议
+                if (Math.random() < 0.8 && intentData.intent !== 'thanks' && intentData.intent !== 'goodbye') {
+                    const followUps = [
+                        "还有其他问题需要帮助吗？",
+                        "请问还有其他疑问吗？",
+                        "如果还有其他问题，请随时告诉我。"
+                    ];
+                    response += " " + followUps[Math.floor(Math.random() * followUps.length)];
+                }
+                
+                return response;
+            },
+            
+            // 添加上下文到历史
+            addToHistory(role, content) {
+                this.conversationHistory.push({ role, content, timestamp: new Date() });
+                // 保持历史记录不超过10条
+                if (this.conversationHistory.length > 10) {
+                    this.conversationHistory.shift();
+                }
+            }
+        };
+
+        // 显示消息函数
+        function appendMsg(role, text) {
+            const msgElement = document.createElement('div');
+            msgElement.className = `msg ${role}`;
+            msgElement.textContent = text;
+            chat.appendChild(msgElement);
+            chat.scrollTop = chat.scrollHeight;
         }
 
+        // 显示输入指示器
+        function showTypingIndicator() {
+            typingIndicator.style.display = 'flex';
+            chat.appendChild(typingIndicator);
+            chat.scrollTop = chat.scrollHeight;
+        }
+
+        // 隐藏输入指示器
+        function hideTypingIndicator() {
+            typingIndicator.style.display = 'none';
+        }
+
+        // 处理用户消息
+        function processUserMessage(message) {
+            // 添加到对话历史
+            responseSystem.addToHistory('user', message);
+            
+            // 显示"正在输入"指示器
+            showTypingIndicator();
+            
+            // 模拟AI处理时间
+            setTimeout(() => {
+                hideTypingIndicator();
+                
+                // 分析用户意图
+                const intent = responseSystem.analyzeIntent(message);
+                
+                // 生成响应
+                const response = responseSystem.generateResponse(intent);
+                
+                // 显示AI响应
+                appendMsg('agent', response);
+                
+                // 添加到对话历史
+                responseSystem.addToHistory('agent', response);
+            }, 1000 + Math.random() * 1000); // 随机延迟1-2秒
+        }
+
+        // 发送按钮事件
         send.addEventListener('click', () => {
-            const t = input.value.trim(); if(!t) return; appendMsg('user', t); input.value='';
-            setTimeout(()=>{
-                // 简单规则回复，参考主程序客服
-                const lowered = t.toLowerCase();
-                if(lowered.includes('为什么') || lowered.includes('原因') || lowered.includes('封')){
-                    appendMsg('agent', '系统提示（模拟）：如为游戏超时触发，原因将显示为“游戏超时触发封号”。');
-                } else if(lowered.includes('申诉') || lowered.includes('解封')){
-                    appendMsg('agent', '若要申诉请提供被封账号的昵称与说明。注意：普通用户申诉不会自动解封。');
-                } else {
-                    appendMsg('agent', '已收到您的信息，我们会在模拟环境记录工单（本地存储）。');
-                }
-            }, 600);
+            const message = input.value.trim();
+            if (!message) return;
+            
+            appendMsg('user', message);
+            input.value = '';
+            processUserMessage(message);
         });
 
-        input.addEventListener('keypress', (e)=>{ if(e.key==='Enter') send.click(); });
+        // 回车键发送
+        input.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                send.click();
+            }
+        });
+
+        // 快捷问题按钮
+        quickButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const question = button.getAttribute('data-question');
+                input.value = question;
+                send.click();
+            });
+        });
+
+        // 页面加载时聚焦输入框
+        window.addEventListener('load', () => {
+            input.focus();
+        });
     </script>
 </body>
 </html>
