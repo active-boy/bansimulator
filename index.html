@@ -95,6 +95,20 @@
             
             <div class="game-area">
                 <canvas id="snake-canvas" width="400" height="400"></canvas>
+                
+                <!-- 手机方向控制按钮 - 添加在游戏画布后面 -->
+                <div class="mobile-controls" style="display: none; margin-top: 20px; text-align: center;">
+                    <div style="margin-bottom: 10px;">
+                        <button class="direction-btn" data-direction="up" style="width: 60px; height: 60px; font-size: 24px;">↑</button>
+                    </div>
+                    <div>
+                        <button class="direction-btn" data-direction="left" style="width: 60px; height: 60px; font-size: 24px; margin-right: 20px;">←</button>
+                        <button class="direction-btn" data-direction="right" style="width: 60px; height: 60px; font-size: 24px;">→</button>
+                    </div>
+                    <div style="margin-top: 10px;">
+                        <button class="direction-btn" data-direction="down" style="width: 60px; height: 60px; font-size: 24px;">↓</button>
+                    </div>
+                </div>
             </div>
             
             <div class="game-controls">

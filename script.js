@@ -1366,113 +1366,163 @@ class GameManager {
     }
 
     bindControls() {
-        document.addEventListener('keydown', (e) => {
-            if (this.gameOver) return;
+    document.addEventListener('keydown', (e) => {
+        if (this.gameOver) return;
 
-            switch(e.key) {
-                case 'ArrowUp':
-                    if (this.dy !== 1) {
-                        this.dx = 0;
-                        this.dy = -1;
-                    }
-                    break;
-                case 'ArrowDown':
-                    if (this.dy !== -1) {
-                        this.dx = 0;
-                        this.dy = 1;
-                    }
-                    break;
-                case 'ArrowLeft':
-                    if (this.dx !== 1) {
-                        this.dx = -1;
-                        this.dy = 0;
-                    }
-                    break;
-                case 'ArrowRight':
-                    if (this.dx !== -1) {
-                        this.dx = 1;
-                        this.dy = 0;
-                    }
-                    break;
-                case ' ':
-                    this.togglePause();
-                    break;
-            }
-        });
-
-        // 触摸控制（移动端支持）
-        this.setupTouchControls();
-
-        // 控制按钮绑定（使用元素上保存的引用以便安全解绑）
-        const startBtn = document.getElementById('start-game-btn');
-        if (startBtn) {
-            try { if (startBtn.__clickHandler) startBtn.removeEventListener('click', startBtn.__clickHandler); } catch(e){}
-            startBtn.__clickHandler = () => this.startGame();
-            startBtn.addEventListener('click', startBtn.__clickHandler);
-        }
-
-        const pauseBtn = document.getElementById('pause-btn');
-        if (pauseBtn) {
-            try { if (pauseBtn.__clickHandler) pauseBtn.removeEventListener('click', pauseBtn.__clickHandler); } catch(e){}
-            pauseBtn.__clickHandler = () => this.togglePause();
-            pauseBtn.addEventListener('click', pauseBtn.__clickHandler);
-        }
-
-        const exitBtn = document.getElementById('exit-btn');
-        if (exitBtn) {
-            try { if (exitBtn.__clickHandler) exitBtn.removeEventListener('click', exitBtn.__clickHandler); } catch(e){}
-            exitBtn.__clickHandler = () => {
-                this.resetGame();
-                if (window.screenManager) window.screenManager.showScreen(CONFIG.SCREENS.MENU);
-            };
-            exitBtn.addEventListener('click', exitBtn.__clickHandler);
-        }
-    }
-
-    setupTouchControls() {
-        let touchStartX = 0;
-        let touchStartY = 0;
-
-        this.canvas.addEventListener('touchstart', (e) => {
-            touchStartX = e.touches[0].clientX;
-            touchStartY = e.touches[0].clientY;
-            e.preventDefault();
-        });
-
-        this.canvas.addEventListener('touchmove', (e) => {
-            if (!touchStartX || !touchStartY) return;
-
-            const touchEndX = e.touches[0].clientX;
-            const touchEndY = e.touches[0].clientY;
-            
-            const dx = touchEndX - touchStartX;
-            const dy = touchEndY - touchStartY;
-
-            if (Math.abs(dx) > Math.abs(dy)) {
-                // 水平滑动
-                if (dx > 0 && this.dx !== -1) {
-                    this.dx = 1;
-                    this.dy = 0;
-                } else if (dx < 0 && this.dx !== 1) {
-                    this.dx = -1;
-                    this.dy = 0;
-                }
-            } else {
-                // 垂直滑动
-                if (dy > 0 && this.dy !== -1) {
-                    this.dx = 0;
-                    this.dy = 1;
-                } else if (dy < 0 && this.dy !== 1) {
+        switch(e.key) {
+            case 'ArrowUp':
+                if (this.dy !== 1) {
                     this.dx = 0;
                     this.dy = -1;
                 }
-            }
+                break;
+            case 'ArrowDown':
+                if (this.dy !== -1) {
+                    this.dx = 0;
+                    this.dy = 1;
+                }
+                break;
+            case 'ArrowLeft':
+                if (this.dx !== 1) {
+                    this.dx = -1;
+                    this.dy = 0;
+                }
+                break;
+            case 'ArrowRight':
+                if (this.dx !== -1) {
+                    this.dx = 1;
+                    this.dy = 0;
+                }
+                break;
+            case ' ':
+                this.togglePause();
+                break;
+        }
+    });
 
-            touchStartX = null;
-            touchStartY = null;
-            e.preventDefault();
+    // 触摸控制（移动端支持）
+    this.setupTouchControls();
+
+    // 移动设备方向按钮控制
+    this.initMobileControls();
+
+    // 控制按钮绑定（使用元素上保存的引用以便安全解绑）
+    const startBtn = document.getElementById('start-game-btn');
+    if (startBtn) {
+        try { if (startBtn.__clickHandler) startBtn.removeEventListener('click', startBtn.__clickHandler); } catch(e){}
+        startBtn.__clickHandler = () => this.startGame();
+        startBtn.addEventListener('click', startBtn.__clickHandler);
+    }
+
+    const pauseBtn = document.getElementById('pause-btn');
+    if (pauseBtn) {
+        try { if (pauseBtn.__clickHandler) pauseBtn.removeEventListener('click', pauseBtn.__clickHandler); } catch(e){}
+        pauseBtn.__clickHandler = () => this.togglePause();
+        pauseBtn.addEventListener('click', pauseBtn.__clickHandler);
+    }
+
+    const exitBtn = document.getElementById('exit-btn');
+    if (exitBtn) {
+        try { if (exitBtn.__clickHandler) exitBtn.removeEventListener('click', exitBtn.__clickHandler); } catch(e){}
+        exitBtn.__clickHandler = () => {
+            this.resetGame();
+            if (window.screenManager) window.screenManager.showScreen(CONFIG.SCREENS.MENU);
+        };
+        exitBtn.addEventListener('click', exitBtn.__clickHandler);
+    }
+}
+
+// 检测移动设备并显示方向按钮
+initMobileControls() {
+    const mobileControls = document.querySelector('.mobile-controls');
+    if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+        mobileControls.style.display = 'block';
+        
+        // 绑定方向按钮事件
+        document.querySelectorAll('.direction-btn').forEach(btn => {
+            btn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                const direction = btn.getAttribute('data-direction');
+                this.changeSnakeDirection(direction);
+            });
         });
     }
+}
+
+// 修改蛇的方向函数
+changeSnakeDirection(direction) {
+    // 防止直接反向移动
+    if (
+        (direction === 'up' && this.dy !== 1) ||
+        (direction === 'down' && this.dy !== -1) ||
+        (direction === 'left' && this.dx !== 1) ||
+        (direction === 'right' && this.dx !== -1)
+    ) {
+        switch(direction) {
+            case 'up':
+                this.dx = 0;
+                this.dy = -1;
+                break;
+            case 'down':
+                this.dx = 0;
+                this.dy = 1;
+                break;
+            case 'left':
+                this.dx = -1;
+                this.dy = 0;
+                break;
+            case 'right':
+                this.dx = 1;
+                this.dy = 0;
+                break;
+        }
+    }
+}
+
+setupTouchControls() {
+    let touchStartX = 0;
+    let touchStartY = 0;
+
+    this.canvas.addEventListener('touchstart', (e) => {
+        touchStartX = e.touches[0].clientX;
+        touchStartY = e.touches[0].clientY;
+        e.preventDefault();
+    });
+
+    this.canvas.addEventListener('touchmove', (e) => {
+        if (!touchStartX || !touchStartY) return;
+
+        const touchEndX = e.touches[0].clientX;
+        const touchEndY = e.touches[0].clientY;
+        
+        const dx = touchEndX - touchStartX;
+        const dy = touchEndY - touchStartY;
+
+        if (Math.abs(dx) > Math.abs(dy)) {
+            // 水平滑动
+            if (dx > 0 && this.dx !== -1) {
+                this.dx = 1;
+                this.dy = 0;
+            } else if (dx < 0 && this.dx !== 1) {
+                this.dx = -1;
+                this.dy = 0;
+            }
+        } else {
+            // 垂直滑动
+            if (dy > 0 && this.dy !== -1) {
+                this.dx = 0;
+                this.dy = 1;
+            } else if (dy < 0 && this.dy !== 1) {
+                this.dx = 0;
+                this.dy = -1;
+            }
+        }
+
+        touchStartX = null;
+        touchStartY = null;
+        e.preventDefault();
+    });
+}
 
     startGame() {
         if (!this.ctx) {
