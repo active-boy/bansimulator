@@ -813,28 +813,30 @@ class AuthManager {
         }
 
         // 登录页的申请解封按钮（若本地检测到被封用户则显示）
-        const applyBtn = document.getElementById('apply-unban-btn');
-        if (applyBtn) {
-            try { if (applyBtn.__click) applyBtn.removeEventListener('click', applyBtn.__click); } catch(e){}
-            applyBtn.__click = () => {
-                const stored = this.storage.getUserData() || {};
-                const nick = (stored.nickname || '').toLowerCase();
-                if (nick === CONFIG.DEVELOPER.NICKNAME) {
-                    // admin直接解封
-                    stored.banned = false;
-                    stored.unbannedAt = new Date().toISOString();
-                    stored.banHistory = stored.banHistory || [];
-                    stored.banHistory.push({ action: 'unban', at: stored.unbannedAt, by: 'developer' });
-                    this.storage.setUserData(stored);
-                    Utils.showNotification('解封通过（开发者操作）', 'success');
-                } else {
-                    // 非 admin 跳转到解封抽取页面
-                    window.location.href = 'unban_lottery.html';
-                }
-            };
-            applyBtn.addEventListener('click', applyBtn.__click);
-        }
-        
+        // 登录页的申请解封按钮（若本地检测到被封用户则显示）
+    const applyBtn = document.getElementById('apply-unban-btn');
+    if (applyBtn) {
+        try { if (applyBtn.__click) applyBtn.removeEventListener('click', applyBtn.__click); } catch(e){}
+        applyBtn.__click = () => {
+            const stored = this.storage.getUserData() || {};
+            const nick = (stored.nickname || '').toLowerCase();
+            if (nick === CONFIG.DEVELOPER.NICKNAME) {
+             // admin直接解封
+                 stored.banned = false;
+                stored.unbannedAt = new Date().toISOString();
+                stored.banHistory = stored.banHistory || [];
+                stored.banHistory.push({ action: 'unban', at: stored.unbannedAt, by: 'developer' });
+                this.storage.setUserData(stored);
+                Utils.showNotification('解封通过（开发者操作）', 'success');
+                // 解封后重新加载页面
+                location.reload();
+            } else {
+             // 非 admin 跳转到客服页面
+             window.location.href = 'ai_customer.html';
+            }
+     };
+        applyBtn.addEventListener('click', applyBtn.__click);
+    }
         // 注：已移除“切换账号”按钮，游戏仅允许单账号登录
     }
     
