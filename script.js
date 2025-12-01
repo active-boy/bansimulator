@@ -866,9 +866,12 @@ class AuthManager {
     async handleLogin() {
         const nicknameInput = document.getElementById('nickname-input');
 
+    if (!nicknameInput) return;
+    
+    const nickname = nicknameInput.value.trim();
+    
+    // 修复：移除重复的验证调用，只保留一次
     if (!this.validateInput(nickname)) return;
-        
-        if (!this.validateInput(nickname)) return;
         
         // 设置加载状态
         this.setLoadingState(true);
