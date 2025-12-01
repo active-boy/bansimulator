@@ -2236,7 +2236,7 @@ class FengjinSimulator {
         // 首次使用提示
         if (!userData || userData.loginCount <= 1) {
             setTimeout(() => {
-                Utils.showNotification('💡 提示：输入"admin"可进入开发者模式', 'info', 5000);
+                Utils.showNotification('正在加载中…', 'info', 5000);
             }, 2000);
         }
     }
