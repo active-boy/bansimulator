@@ -959,16 +959,30 @@ class AuthManager {
         await this.showLoginSuccess();
 
         // 若账号被封禁，则跳转到专用的封禁着陆页；否则进入主菜单
-        if (userData.banned) {
-            if (this.screens && this.screens.screens && this.screens.screens.BANNED) {
-                this.screens.showScreen(this.screens.screens.BANNED);
-                try { this.updateBannedScreen(); } catch(e){}
-            } else {
-                // If no banned screen available, fallback to menu
-                this.screens.showScreen(this.screens.screens.MENU);
-            }
-            return;
-        }
+        
+        // 修复：只在明确被封禁时才显示封禁页面
+const shouldShowBanned = userData.banned === true || userData.banned === 'true';
+
+if (shouldShowBanned) {
+    console.log('❌❌❌ 显示封禁页面 - 用户确实被封禁');
+    if (this.screens && this.screens.screens && this.screens.screens.BANNED) {
+        this.screens.showScreen(this.screens.screens.BANNED);
+        try { this.updateBannedScreen(); } catch(e){}
+    } else {
+        // 如果没有封禁页面，回退到菜单
+        this.screens.showScreen(this.screens.screens.MENU);
+    }
+    return;
+} else {
+    console.log('✅✅✅ 显示游戏界面 - 用户正常');
+    // 正常流程：直接进入游戏
+    if (this.screens && this.screens.showScreen) {
+        this.screens.showScreen(this.screens.screens.GAME);
+        const playerNameEl = document.getElementById('player-name');
+        if (playerNameEl) playerNameEl.textContent = userData.nickname || '玩家';
+    }
+}
+        
 
         // 直接进入游戏界面（不经过主菜单）
         if (this.screens && this.screens.showScreen) {
