@@ -1,5 +1,4 @@
-﻿/* === CSS_RESET 开始 === */
-/* 基础样式重置和变量定义 */
+/* === 封禁模拟器 - 修复版CSS === */
 * {
     margin: 0;
     padding: 0;
@@ -27,55 +26,96 @@
     --transition: all 0.3s ease;
 }
 
-body {
+/* 修复页面滚动问题 */
+html, body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden; /* 防止整体页面滚动 */
     font-family: 'Microsoft YaHei', 'Segoe UI', sans-serif;
     background: var(--bg-color);
     color: var(--text-color);
     line-height: 1.6;
-    min-height: 100vh;
-    overflow-x: hidden;
 }
 
-/* 滚动条样式 */
-::-webkit-scrollbar {
-    width: 8px;
+/* === 核心修复：页面重叠布局 === */
+.screen {
+    position: fixed; /* 关键修复：使用固定定位 */
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+    z-index: 1;
+    overflow-y: auto; /* 允许页面内部滚动 */
+    padding: 20px;
 }
 
-::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 4px;
+.screen.active {
+    opacity: 1;
+    visibility: visible;
+    z-index: 10;
 }
 
-::-webkit-scrollbar-thumb {
-    background: var(--primary-color);
-    border-radius: 4px;
+/* 移除原来的显示逻辑 */
+/* .screen { display: none; } */
+/* .screen.active { display: block; } */
+
+/* 页面内容容器 */
+.screen-container {
+    max-width: 500px;
+    margin: 0 auto;
+    width: 100%;
+    min-height: 100%;
 }
 
-::-webkit-scrollbar-thumb:hover {
-    background: var(--secondary-color);
+/* 各页面特定背景 */
+#login-screen {
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
-/* === CSS_RESET 结束 === */
-/* === CSS_BASE 开始 === */
-/* 工具类和基础组件样式 */
+
+#menu-screen {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+#game-screen {
+    background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
+    color: white;
+}
+
+#complaint-screen {
+    background: linear-gradient(135deg, #4a5568 0%, #718096 100%);
+    color: white;
+}
+
+#settings-screen {
+    background: linear-gradient(135deg, #2d3748 0%, #4a5568 100%);
+    color: white;
+}
+
+#banned-screen {
+    background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
+    color: #e2e8f0;
+}
+
+#customer-screen {
+    background: linear-gradient(135deg, #2d3748 0%, #4a5568 100%);
+    color: white;
+}
+
+/* === 基础组件样式 === */
 .container {
     max-width: 1200px;
     margin: 0 auto;
     padding: 0 20px;
 }
 
-.sr-only {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    padding: 0;
-    margin: -1px;
-    overflow: hidden;
-    clip: rect(0, 0, 0, 0);
-    white-space: nowrap;
-    border: 0;
-}
-
-/* 按钮基础样式 */
 .btn {
     display: inline-flex;
     align-items: center;
@@ -118,7 +158,6 @@ body {
     background: #cbd5e0;
 }
 
-/* 输入框样式 */
 .input-group {
     margin-bottom: 20px;
 }
@@ -146,7 +185,6 @@ body {
     box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
-/* 错误消息 */
 .error-message {
     color: var(--danger-color);
     font-size: 14px;
@@ -155,7 +193,6 @@ body {
     font-weight: 500;
 }
 
-/* 加载动画 */
 .loading-spinner {
     width: 20px;
     height: 20px;
@@ -169,27 +206,6 @@ body {
     to { transform: rotate(360deg); }
 }
 
-/* 渐变文字 */
-.gradient-text {
-    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-}
-/* === CSS_BASE 结束 === */
-/* === CSS_SCREENS 开始 === */
-/* 屏幕容器管理系统 */
-.screen {
-    display: none;
-    min-height: 100vh;
-    padding: 20px;
-    animation: fadeIn 0.5s ease;
-}
-
-.screen.active {
-    display: block;
-}
-
 @keyframes fadeIn {
     from {
         opacity: 0;
@@ -201,42 +217,7 @@ body {
     }
 }
 
-/* 屏幕内容容器 */
-.screen-container {
-    max-width: 500px;
-    margin: 0 auto;
-    width: 100%;
-}
-
-/* 特定屏幕的背景 */
-#login-screen {
-    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-#menu-screen {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-}
-
-#game-screen {
-    background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
-    color: white;
-}
-
-#invite-screen {
-    background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
-    color: white;
-}
-
-#main-screen {
-    background: linear-gradient(135deg, #4a5568 0%, #718096 100%);
-    color: white;
-}
-/* === CSS_SCREENS 结束 === */
-/* === CSS_LOGIN 开始 === */
-/* 登录界面特定样式 */
+/* === 登录页面样式 === */
 .login-container {
     background: var(--card-bg);
     padding: 40px 30px;
@@ -264,50 +245,7 @@ body {
     line-height: 1.5;
 }
 
-.input-section {
-    margin: 30px 0;
-}
-
-#nickname-input {
-    width: 100%;
-    padding: 15px 20px;
-    border: 2px solid var(--border-color);
-    border-radius: var(--radius);
-    font-size: 16px;
-    transition: var(--transition);
-    background: white;
-}
-
-#nickname-input:focus {
-    outline: none;
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-}
-
-.feature-list {
-    margin: 30px 0;
-    text-align: left;
-}
-
-.feature-item {
-    padding: 8px 0;
-    color: var(--text-light);
-    border-bottom: 1px solid var(--border-color);
-}
-
-.feature-item:last-child {
-    border-bottom: none;
-}
-
-.disclaimer {
-    margin-top: 20px;
-    color: var(--text-light);
-    font-size: 0.9em;
-    line-height: 1.5;
-}
-/* === CSS_LOGIN 结束 === */
-/* === CSS_MENU 开始 === */
-/* 主菜单界面样式 */
+/* === 菜单页面样式 === */
 .menu-container {
     max-width: 900px;
     margin: 0 auto;
@@ -376,333 +314,7 @@ body {
     line-height: 1.5;
 }
 
-/* 封禁状态样式 */
-.status-text .banned {
-    color: var(--danger-color);
-    font-weight: bold;
-}
-
-.status-text .normal {
-    color: var(--text-color);
-}
-
-/* 解封按钮（开发者）微调 */
-#unban-btn {
-    display: none; /* 默认隐藏，由脚本控制显示 */
-}
-
-.menu-badge {
-    position: absolute;
-    top: -10px;
-    right: -10px;
-    background: var(--danger-color);
-    color: white;
-    padding: 5px 12px;
-    border-radius: 20px;
-    font-size: 0.8em;
-    font-weight: bold;
-}
-
-.menu-footer {
-    text-align: center;
-}
-
-/* 分享提示小字，适用于菜单和游戏页 */
-.share-note {
-    font-size: 0.85em;
-    opacity: 0.9;
-}
-
-/* 客服对话样式 */
-.customer-container {
-    max-width: 800px;
-    margin: 40px auto;
-    background: rgba(255,255,255,0.06);
-    padding: 20px;
-    border-radius: 12px;
-    color: white;
-}
-
-/* 被封页面样式 */
-.banned-container {
-    max-width: 800px;
-    margin: 40px auto;
-    background: rgba(255,255,255,0.04);
-    padding: 20px;
-    border-radius: 12px;
-    color: white;
-}
-
-.banned-header h2 { margin-bottom: 8px; }
-.banned-info { margin: 12px 0; color: #f6ad55; }
-.banned-actions { display:flex; gap:8px; margin: 12px 0 20px; }
-.banned-history { background: rgba(255,255,255,0.02); padding: 12px; border-radius:8px; }
-
-.customer-header {
-    display:flex;
-    align-items:center;
-    gap:12px;
-    margin-bottom:12px;
-}
-
-.customer-chat {
-    background: rgba(0,0,0,0.2);
-    padding: 12px;
-    border-radius: 8px;
-    height: 360px;
-    overflow-y: auto;
-    margin-bottom: 12px;
-}
-
-.chat-messages .msg {
-    padding: 8px 12px;
-    border-radius: 12px;
-    margin-bottom:8px;
-    max-width: 80%;
-}
-
-.chat-messages .msg.agent {
-    background: rgba(255,255,255,0.12);
-    color: #fff;
-    align-self: flex-start;
-}
-
-.chat-messages .msg.user {
-    background: rgba(255,255,255,0.25);
-    color: #000;
-    align-self: flex-end;
-    margin-left: auto;
-}
-
-.customer-quick { display:flex; gap:8px; margin-bottom:8px; }
-.quick-btn { padding:6px 10px; border-radius:8px; background:rgba(255,255,255,0.08); color:white; border:none; cursor:pointer; }
-
-.customer-input { display:flex; gap:8px; }
-.customer-input input { flex:1; padding:10px 12px; border-radius:8px; border:1px solid rgba(255,255,255,0.08); background:transparent; color:white; }
-.customer-input input::placeholder { color: rgba(255,255,255,0.6); }
-
-/* === CSS_MENU 结束 === */
-/* === CSS_MENU 结束 === */
-
-/* === CSS_BANNED 开始 === */
-/* 被封禁账号页面样式 */
-#banned-screen {
-    background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
-    color: #e2e8f0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 100vh;
-}
-
-.banned-container {
-    background: rgba(26, 32, 44, 0.95);
-    color: #e2e8f0;
-    border-radius: 12px;
-    padding: 30px;
-    margin: 20px;
-    max-width: 600px;
-    width: 90%;
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    animation: fadeInUp 0.6s ease;
-}
-
-.banned-header {
-    text-align: center;
-    margin-bottom: 25px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    padding-bottom: 20px;
-}
-
-.banned-header h2 {
-    color: #e53e3e;
-    font-size: 2.2em;
-    margin-bottom: 10px;
-    text-shadow: 0 2px 4px rgba(229, 62, 62, 0.3);
-}
-
-.user-welcome {
-    font-size: 1.1em;
-    color: #a0aec0;
-}
-
-#banned-nickname {
-    color: #f6ad55;
-    font-weight: bold;
-}
-
-.banned-info {
-    background: rgba(0, 0, 0, 0.3);
-    padding: 20px;
-    border-radius: 8px;
-    margin-bottom: 25px;
-    border-left: 4px solid #e53e3e;
-}
-
-.banned-info p {
-    margin: 12px 0;
-    color: #cbd5e0;
-    font-size: 1em;
-}
-
-#banned-reason, #banned-at {
-    color: #f6ad55;
-    font-weight: 600;
-}
-
-.banned-actions {
-    display: flex;
-    gap: 12px;
-    flex-wrap: wrap;
-    justify-content: center;
-    margin-bottom: 25px;
-}
-
-.banned-actions .primary-btn {
-    background: linear-gradient(135deg, #4299e1, #3182ce);
-    color: white;
-    border: none;
-    padding: 12px 24px;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 14px;
-    transition: all 0.3s ease;
-    min-width: 120px;
-}
-
-.banned-actions .secondary-btn {
-    background: rgba(255, 255, 255, 0.1);
-    color: #e2e8f0;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    padding: 12px 24px;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 14px;
-    transition: all 0.3s ease;
-    min-width: 120px;
-}
-
-.banned-actions .primary-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(66, 153, 225, 0.4);
-}
-
-.banned-actions .secondary-btn:hover {
-    background: rgba(255, 255, 255, 0.2);
-    transform: translateY(-1px);
-}
-
-#banned-unban-btn {
-    background: linear-gradient(135deg, #48bb78, #38a169) !important;
-}
-
-#banned-unban-btn:hover {
-    box-shadow: 0 5px 15px rgba(72, 187, 120, 0.4) !important;
-}
-
-.banned-history {
-    background: rgba(0, 0, 0, 0.2);
-    padding: 20px;
-    border-radius: 8px;
-}
-
-.banned-history h3 {
-    color: #e2e8f0;
-    margin-bottom: 15px;
-    text-align: center;
-    font-size: 1.2em;
-}
-
-#banned-history-list {
-    max-height: 200px;
-    overflow-y: auto;
-    padding: 10px;
-}
-
-.ban-entry {
-    background: rgba(255, 255, 255, 0.05);
-    padding: 10px 15px;
-    border-radius: 6px;
-    margin-bottom: 8px;
-    border-left: 3px solid #e53e3e;
-    font-size: 0.9em;
-    color: #cbd5e0;
-}
-
-.no-records {
-    text-align: center;
-    color: #718096;
-    padding: 20px;
-    font-style: italic;
-}
-
-/* 响应式调整 */
-@media (max-width: 768px) {
-    .banned-container {
-        margin: 10px;
-        padding: 20px;
-    }
-    
-    .banned-header h2 {
-        font-size: 1.8em;
-    }
-    
-    .banned-actions {
-        flex-direction: column;
-        align-items: center;
-    }
-    
-    .banned-actions .primary-btn,
-    .banned-actions .secondary-btn {
-        width: 100%;
-        max-width: 250px;
-    }
-}
-
-@media (max-width: 480px) {
-    .banned-container {
-        padding: 15px;
-    }
-    
-    .banned-header h2 {
-        font-size: 1.5em;
-    }
-    
-    .banned-info {
-        padding: 15px;
-    }
-}
-
-/* 动画效果 */
-@keyframes fadeInUp {
-    from {
-        opacity: 0;
-        transform: translateY(30px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.banned-container {
-    animation: fadeInUp 0.6s ease;
-}
-
-.banned-info {
-    transition: all 0.3s ease;
-}
-
-.banned-info:hover {
-    background: rgba(0, 0, 0, 0.4);
-    transform: translateY(-2px);
-}
-/* === CSS_BANNED 结束 === */
-
-/* === CSS_GAME 开始 === */
-/* === CSS_GAME 开始 === */
-/* 贪吃蛇游戏界面样式 */
+/* === 游戏页面样式 === */
 .game-container {
     max-width: 600px;
     margin: 0 auto;
@@ -729,7 +341,7 @@ body {
 
 .game-stats {
     display: grid;
-    grid-template-columns: repeat(2, 1fr); /* 调整为两列以补齐移除时间元素后的布局 */
+    grid-template-columns: repeat(2, 1fr);
     gap: 20px;
     margin: 30px 0;
     max-width: 400px;
@@ -762,6 +374,8 @@ body {
     margin: 30px 0;
     display: flex;
     justify-content: center;
+    flex-direction: column;
+    align-items: center;
 }
 
 #snake-canvas {
@@ -805,13 +419,10 @@ body {
 .control-btn.secondary-btn:hover {
     background: #718096;
 }
-/* === CSS_GAME 结束 === */
-/* === CSS_GAME 结束 === */
 
-/* === CSS_MOBILE_CONTROLS 开始 === */
-/* 移动设备方向控制按钮样式 */
+/* === 移动控制按钮 === */
 .mobile-controls {
-    display: none; /* 默认隐藏，JS会在移动设备上显示 */
+    display: none;
     margin-top: 20px;
     text-align: center;
     padding: 10px;
@@ -839,24 +450,285 @@ body {
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
-/* 移动设备响应式调整 */
-@media (max-width: 768px) {
-    .mobile-controls {
-        display: block !important; /* 在移动设备上强制显示 */
-    }
-    
-    .direction-btn {
-        width: 50px;
-        height: 50px;
-        font-size: 20px;
-    }
+/* === 投诉页面样式 === */
+.complaint-container {
+    max-width: 500px;
+    margin: 0 auto;
+    text-align: center;
 }
 
-/* 确保游戏区域在移动设备上有足够空间 */
-@media (max-width: 480px) {
-    .game-area {
-        flex-direction: column;
-        align-items: center;
+.result-header {
+    margin-bottom: 30px;
+}
+
+.result-header h2 {
+    font-size: 2.5em;
+    margin-bottom: 10px;
+    color: white;
+}
+
+.final-score {
+    font-size: 1.5em;
+    color: #a0aec0;
+}
+
+.complaint-question {
+    margin: 40px 0;
+}
+
+.complaint-question p {
+    font-size: 1.2em;
+    margin-bottom: 20px;
+    color: white;
+}
+
+.complaint-options {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.complaint-btn {
+    min-width: 200px;
+    padding: 15px 25px;
+    font-size: 1.1em;
+}
+
+.complaint-tip {
+    margin-top: 20px;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+/* === 设置页面样式 === */
+.settings-container {
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+.settings-container h2 {
+    text-align: center;
+    margin-bottom: 30px;
+    color: white;
+}
+
+.settings-options {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 20px;
+    border-radius: var(--radius);
+    margin-bottom: 30px;
+}
+
+.setting-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.setting-item:last-child {
+    border-bottom: none;
+}
+
+.setting-item label {
+    color: white;
+    font-weight: 600;
+}
+
+.volume-slider {
+    width: 150px;
+}
+
+.toggle-switch {
+    width: 50px;
+    height: 25px;
+    appearance: none;
+    background: #718096;
+    border-radius: 25px;
+    position: relative;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.toggle-switch:checked {
+    background: #48bb78;
+}
+
+.toggle-switch::after {
+    content: '';
+    position: absolute;
+    width: 21px;
+    height: 21px;
+    border-radius: 50%;
+    background: white;
+    top: 2px;
+    left: 2px;
+    transition: var(--transition);
+}
+
+.toggle-switch:checked::after {
+    left: calc(100% - 23px);
+}
+
+/* === 封禁页面样式 === */
+.banned-container {
+    background: rgba(26, 32, 44, 0.95);
+    color: #e2e8f0;
+    border-radius: 12px;
+    padding: 30px;
+    margin: 20px auto;
+    max-width: 600px;
+    width: 90%;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.banned-header {
+    text-align: center;
+    margin-bottom: 25px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 20px;
+}
+
+.banned-header h2 {
+    color: #e53e3e;
+    font-size: 2.2em;
+    margin-bottom: 10px;
+}
+
+.banned-info {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 25px;
+    border-left: 4px solid #e53e3e;
+}
+
+.banned-info p {
+    margin: 12px 0;
+    color: #cbd5e0;
+}
+
+.banned-actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-bottom: 25px;
+}
+
+.banned-history {
+    background: rgba(0, 0, 0, 0.2);
+    padding: 20px;
+    border-radius: 8px;
+}
+
+.banned-history h3 {
+    color: #e2e8f0;
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+/* === 客服页面样式 === */
+.customer-container {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.customer-header {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.customer-header h2 {
+    color: white;
+    margin: 0;
+}
+
+.customer-chat {
+    background: rgba(0, 0, 0, 0.2);
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    height: 300px;
+    overflow-y: auto;
+}
+
+.chat-messages .msg {
+    padding: 10px 15px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    max-width: 80%;
+}
+
+.chat-messages .msg.agent {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    align-self: flex-start;
+}
+
+.chat-messages .msg.user {
+    background: rgba(255, 255, 255, 0.3);
+    color: black;
+    align-self: flex-end;
+    margin-left: auto;
+}
+
+.customer-quick {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
+}
+
+.quick-btn {
+    padding: 8px 16px;
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    border-radius: 6px;
+    color: white;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.quick-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.customer-input {
+    display: flex;
+    gap: 10px;
+}
+
+.customer-input input {
+    flex: 1;
+    padding: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.1});
+    color: white;
+}
+
+.customer-input input::placeholder {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+/* === 响应式设计 === */
+@media (max-width: 768px) {
+    .screen {
+        padding: 10px;
+    }
+    
+    .menu-options {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+    
+    .game-stats {
+        grid-template-columns: 1fr;
     }
     
     #snake-canvas {
@@ -865,412 +737,26 @@ body {
         height: auto;
     }
     
-    .direction-btn {
-        width: 45px;
-        height: 45px;
-        font-size: 18px;
-    }
-}
-/* === CSS_MOBILE_CONTROLS 结束 === */
-
-/* === CSS_INVITE 开始 === */
-/* === CSS_INVITE 开始 === */
-/* 邀请助力抽奖界面样式 */
-.invite-container {
-    max-width: 800px;
-    margin: 0 auto;
-    padding: 20px;
-}
-
-.invite-header {
-    text-align: center;
-    margin-bottom: 40px;
-}
-
-.invite-header h2 {
-    font-size: 2.5em;
-    margin-bottom: 10px;
-    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
-}
-
-.invite-header p {
-    font-size: 1.2em;
-    opacity: 0.9;
-}
-
-/* 货币显示 */
-.currency-display {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 15px;
-    margin: 30px 0;
-    background: rgba(255,255,255,0.1);
-    padding: 20px;
-    border-radius: 15px;
-    backdrop-filter: blur(10px);
-}
-
-.currency-item {
-    text-align: center;
-    padding: 15px;
-    background: rgba(255,255,255,0.2);
-    border-radius: 10px;
-    transition: transform 0.3s ease;
-}
-
-.currency-item:hover {
-    transform: translateY(-5px);
-}
-
-.currency-icon {
-    font-size: 2em;
-    display: block;
-}
-
-.currency-amount {
-    font-size: 1.8em;
-    font-weight: bold;
-    display: block;
-    margin: 5px 0;
-}
-
-.currency-name {
-    font-size: 0.9em;
-    opacity: 0.8;
-}
-
-/* 抽奖转盘 */
-.lottery-section {
-    background: rgba(255,255,255,0.1);
-    padding: 30px;
-    border-radius: 20px;
-    margin: 30px 0;
-    text-align: center;
-}
-
-.lottery-wheel {
-    width: 300px;
-    height: 300px;
-    margin: 0 auto 30px;
-    position: relative;
-    border-radius: 50%;
-    background: conic-gradient(
-        from 0deg,
-        #ff6b6b 0deg 45deg,
-        #4ecdc4 45deg 90deg,
-        #ff6b6b 90deg 135deg,
-        #4ecdc4 135deg 180deg,
-        #ff6b6b 180deg 225deg,
-        #4ecdc4 225deg 270deg,
-        #ff6b6b 270deg 315deg,
-        #4ecdc4 315deg 360deg
-    );
-    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-    transition: transform 3s cubic-bezier(0.2, 0.8, 0.2, 1);
-}
-
-.lottery-wheel.spinning {
-    animation: spin 3s cubic-bezier(0.2, 0.8, 0.2, 1);
-}
-
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(1080deg); }
-}
-
-.wheel-center {
-    position: absolute;
-    width: 80px;
-    height: 80px;
-    background: white;
-    border-radius: 50%;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-    z-index: 2;
-}
-
-.wheel-pointer {
-    font-size: 2em;
-    transform: rotate(45deg);
-}
-
-.wheel-items {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-}
-
-.wheel-item {
-    position: absolute;
-    width: 50%;
-    height: 50%;
-    left: 50%;
-    top: 0;
-    transform-origin: left bottom;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-weight: bold;
-    font-size: 1.2em;
-    text-shadow: 0 1px 2px rgba(0,0,0,0.5);
-}
-
-.wheel-item:nth-child(1) { transform: rotate(22.5deg); }
-.wheel-item:nth-child(2) { transform: rotate(67.5deg); }
-.wheel-item:nth-child(3) { transform: rotate(112.5deg); }
-.wheel-item:nth-child(4) { transform: rotate(157.5deg); }
-.wheel-item:nth-child(5) { transform: rotate(202.5deg); }
-.wheel-item:nth-child(6) { 
-    transform: rotate(247.5deg); 
-    background: gold !important;
-    color: #333 !important;
-}
-.wheel-item:nth-child(7) { transform: rotate(292.5deg); }
-.wheel-item:nth-child(8) { transform: rotate(337.5deg); }
-
-/* 抽奖控制 */
-.lottery-controls {
-    margin-top: 20px;
-}
-
-.spin-btn {
-    background: linear-gradient(135deg, #ffd93d, #ff9a3d);
-    border: none;
-    padding: 15px 30px;
-    border-radius: 25px;
-    font-size: 1.2em;
-    font-weight: bold;
-    color: #333;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    box-shadow: 0 5px 15px rgba(255, 217, 61, 0.4);
-    margin-bottom: 15px;
-}
-
-.spin-btn:disabled {
-    background: #cccccc;
-    cursor: not-allowed;
-    transform: none;
-    box-shadow: none;
-}
-
-.spin-btn:hover:not(:disabled) {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(255, 217, 61, 0.6);
-}
-
-.spin-info {
-    display: flex;
-    justify-content: space-around;
-    font-size: 0.9em;
-    opacity: 0.8;
-}
-
-/* 兑换区域 */
-.exchange-section {
-    background: rgba(255,255,255,0.1);
-    padding: 20px;
-    border-radius: 15px;
-    margin: 20px 0;
-}
-
-.exchange-options {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 10px;
-    margin-top: 15px;
-}
-
-.exchange-option {
-    background: rgba(255,255,255,0.2);
-    padding: 15px;
-    border-radius: 10px;
-    text-align: center;
-}
-
-.exchange-btn {
-    background: rgba(255,255,255,0.3);
-    border: none;
-    padding: 8px 15px;
-    border-radius: 20px;
-    color: white;
-    cursor: pointer;
-    margin-top: 8px;
-    transition: background 0.3s ease;
-}
-
-.exchange-btn:hover:not(:disabled) {
-    background: rgba(255,255,255,0.5);
-}
-
-.exchange-btn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
-
-/* 邀请助力 */
-.invite-section {
-    background: rgba(255,255,255,0.1);
-    padding: 20px;
-    border-radius: 15px;
-    margin: 20px 0;
-}
-
-.invite-options {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 15px;
-    margin-top: 15px;
-}
-
-.invite-option {
-    background: rgba(255,255,255,0.2);
-    padding: 20px;
-    border-radius: 10px;
-    text-align: center;
-    position: relative;
-}
-
-.invite-reward {
-    font-size: 1.5em;
-    font-weight: bold;
-    margin-bottom: 10px;
-}
-
-.invite-btn {
-    background: linear-gradient(135deg, #4ecdc4, #44a08d);
-    border: none;
-    padding: 10px 15px;
-    border-radius: 20px;
-    color: white;
-    cursor: pointer;
-    width: 100%;
-    font-size: 0.9em;
-    transition: all 0.3s ease;
-}
-
-.invite-btn:hover {
-    transform: translateY(-2px);
-}
-
-.invite-desc {
-    font-size: 0.8em;
-    opacity: 0.8;
-    margin-top: 8px;
-}
-
-.invite-simulation {
-    text-align: center;
-    margin-top: 20px;
-    padding-top: 20px;
-    border-top: 1px solid rgba(255,255,255,0.2);
-}
-
-.simulate-btn {
-    background: rgba(255,255,255,0.3);
-    border: none;
-    padding: 10px 20px;
-    border-radius: 20px;
-    color: white;
-    cursor: pointer;
-    font-size: 0.9em;
-}
-
-/* 抽奖记录 */
-.history-section {
-    background: rgba(255,255,255,0.1);
-    padding: 20px;
-    border-radius: 15px;
-    margin: 20px 0;
-}
-
-.history-list {
-    max-height: 200px;
-    overflow-y: auto;
-    margin-top: 15px;
-}
-
-.history-item {
-    background: rgba(255,255,255,0.1);
-    padding: 10px 15px;
-    border-radius: 8px;
-    margin-bottom: 8px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.history-reward {
-    font-weight: bold;
-}
-
-.history-time {
-    font-size: 0.8em;
-    opacity: 0.7;
-}
-
-.history-empty {
-    text-align: center;
-    padding: 30px;
-    opacity: 0.7;
-    font-style: italic;
-}
-/* === CSS_INVITE 结束 === */
-/* === CSS_RESPONSIVE 开始 === */
-/* 响应式设计 */
-@media (max-width: 768px) {
-    .screen {
-        padding: 10px;
+    .complaint-options {
+        flex-direction: column;
+        align-items: center;
     }
     
-    .login-container {
-        padding: 30px 20px;
-        margin: 10px;
-    }
-    
-    .menu-options {
-        grid-template-columns: 1fr;
-        gap: 15px;
-    }
-    
-    .currency-display {
-        grid-template-columns: repeat(2, 1fr);
-    }
-    
-    .exchange-options,
-    .invite-options {
-        grid-template-columns: 1fr;
-    }
-    
-    .lottery-wheel {
-        width: 250px;
-        height: 250px;
-    }
-    
-    .wheel-item {
-        font-size: 1em;
-    }
-    
-    .game-stats {
-        grid-template-columns: 1fr;
-        gap: 10px;
-    }
-    
-    #snake-canvas {
+    .complaint-btn {
         width: 100%;
-        height: auto;
-        max-width: 400px;
+        max-width: 300px;
     }
     
-    .control-btn {
-        margin: 5px;
-        width: calc(100% - 10px);
+    .banned-actions {
+        flex-direction: column;
+    }
+    
+    .customer-quick {
+        flex-direction: column;
+    }
+    
+    .mobile-controls {
+        display: block;
     }
 }
 
@@ -1287,13 +773,10 @@ body {
         padding: 20px 15px;
     }
     
-    .currency-display {
-        grid-template-columns: 1fr;
-    }
-    
-    .lottery-wheel {
-        width: 200px;
-        height: 200px;
+    .direction-btn {
+        width: 50px;
+        height: 50px;
+        font-size: 20px;
     }
 }
 
@@ -1301,33 +784,37 @@ body {
 @media (max-height: 500px) and (orientation: landscape) {
     .screen {
         padding: 10px;
-        min-height: auto;
     }
     
-    .login-container {
-        padding: 20px;
-    }
-    
-    .menu-options {
-        grid-template-columns: repeat(2, 1fr);
+    .login-container,
+    .menu-container {
+        max-height: 95vh;
+        overflow-y: auto;
     }
 }
 
-/* 高分辨率屏幕 */
-@media (min-width: 1200px) {
-    .container {
-        max-width: 1400px;
-    }
+/* 滚动条样式 */
+::-webkit-scrollbar {
+    width: 8px;
 }
 
-/* 打印样式 */
-@media print {
-    .screen:not(.active) {
-        display: none !important;
-    }
-    
-    .btn, .menu-card, .lottery-wheel {
-        box-shadow: none !important;
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--primary-color);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--secondary-color);
+}
+
+/* iOS弹性滚动优化 */
+@supports (-webkit-touch-callout: none) {
+    .screen {
+        -webkit-overflow-scrolling: touch;
     }
 }
-/* === CSS_RESPONSIVE 结束 === */
